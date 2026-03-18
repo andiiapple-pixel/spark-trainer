@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Send, Loader } from 'lucide-react';
 import { storage } from '../../utils/storage';
 import { sendCoachMessage } from '../../api/anthropic';
+import { data as dataApi } from '../../services/api';
 
 const STARTER_PROMPTS = [
   "Am I overtraining?",
@@ -47,6 +48,16 @@ export default function Coach() {
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
 
+  // Load chat history from API on mount; fall back to localStorage
+  useEffect(() => {
+    dataApi.getCoachChat()
+      .then(res => {
+        const apiMsgs = (res.messages || []).map(m => ({ role: m.role, content: m.content }));
+        if (apiMsgs.length > 0) setMessages(apiMsgs);
+      })
+      .catch(() => {}); // silently use localStorage fallback
+  }, []);
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
@@ -77,6 +88,8 @@ export default function Coach() {
       const assistantMsg = { role: 'assistant', content: reply };
       setMessages(m => [...m, assistantMsg]);
       storage.addCoachMessage(assistantMsg);
+      // Persist both messages to API (non-blocking)
+      dataApi.saveCoachMessages([userMsg, assistantMsg]).catch(() => {});
     } catch (e) {
       setError("Your trainer lost connection. Try again.");
     } finally {

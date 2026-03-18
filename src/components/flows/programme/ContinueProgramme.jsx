@@ -7,9 +7,11 @@ import ErrorState from '../../shared/ErrorState';
 import WorkoutDisplay from '../new-workout/WorkoutDisplay';
 import { storage, daysSince } from '../../../utils/storage';
 import { generateWorkout } from '../../../api/anthropic';
+import { useActiveWorkout } from '../../../context/ActiveWorkoutContext';
 
 export default function ContinueProgramme() {
   const navigate = useNavigate();
+  const ctx = useActiveWorkout();
   const programme = storage.getActiveProgramme();
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
@@ -70,12 +72,9 @@ export default function ContinueProgramme() {
         progression_model: programme.progression,
       };
       const result = await generateWorkout(profile, sessionConfig, history.slice(0, 3), programmeCtx);
-      setWorkout({
-        ...result,
-        sessionConfig,
-        programmeDay: nextIndex,
-        generatedAt: new Date().toISOString(),
-      });
+      const w = { ...result, sessionConfig, programmeDay: nextIndex, generatedAt: new Date().toISOString() };
+      ctx.setWorkoutGenerated(w);
+      setWorkout(w);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -105,7 +104,7 @@ export default function ContinueProgramme() {
     return (
       <WorkoutDisplay
         workout={workout}
-        onStart={() => navigate('/workout/active', { state: { workout } })}
+        onStart={() => { ctx.startWorkout(); navigate('/workout/active'); }}
         onRegenerate={async (note) => {
           setWorkout(null);
           if (note) setNotes(note);

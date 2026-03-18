@@ -7,6 +7,7 @@ const KEYS = {
   PERSONAL_RECORDS: 'trainer_personal_records',
   COACH_CHAT: 'trainer_coach_chat',
   SETTINGS: 'trainer_app_settings',
+  ACTIVE_WORKOUT: 'spark_active_workout',
 };
 
 export { KEYS };
@@ -87,6 +88,45 @@ export const storage = {
 
   getSettings: () => get(KEYS.SETTINGS, { units: 'metric', theme: 'dark' }),
   setSettings: (s) => set(KEYS.SETTINGS, s),
+};
+
+export const activeWorkout = {
+  get: () => get(KEYS.ACTIVE_WORKOUT),
+  clear: () => localStorage.removeItem(KEYS.ACTIVE_WORKOUT),
+  save: (workout) => set(KEYS.ACTIVE_WORKOUT, {
+    workout,
+    status: 'generated',
+    startedAt: null,
+    lastActiveAt: new Date().toISOString(),
+    progress: {
+      currentExerciseIndex: 0,
+      completedSets: {},
+      skippedExercises: [],
+      elapsedSeconds: 0,
+    },
+  }),
+  start: () => {
+    const current = get(KEYS.ACTIVE_WORKOUT);
+    if (current) {
+      set(KEYS.ACTIVE_WORKOUT, {
+        ...current,
+        status: 'in_progress',
+        startedAt: current.startedAt || new Date().toISOString(),
+        lastActiveAt: new Date().toISOString(),
+      });
+    }
+  },
+  saveProgress: (progress) => {
+    const current = get(KEYS.ACTIVE_WORKOUT);
+    if (current) {
+      set(KEYS.ACTIVE_WORKOUT, {
+        ...current,
+        status: 'in_progress',
+        lastActiveAt: new Date().toISOString(),
+        progress,
+      });
+    }
+  },
 };
 
 export function getGreeting() {

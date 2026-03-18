@@ -1,12 +1,15 @@
 import { useNavigate } from 'react-router-dom';
-import { Play, RefreshCw, Plus, ClipboardList, TrendingUp, Settings, Flame, Zap } from 'lucide-react';
+import { Play, RefreshCw, Plus, ClipboardList, TrendingUp, Settings, Flame, Zap, Dumbbell } from 'lucide-react';
 import { storage, getGreeting, getMotivationalLine, getWeeklyWorkoutCount, getCurrentStreak } from '../../utils/storage';
+import { useActiveWorkout } from '../../context/ActiveWorkoutContext';
 
 export default function Home() {
   const navigate = useNavigate();
+  const ctx = useActiveWorkout();
   const profile = storage.getProfile();
   const history = storage.getWorkoutHistory();
   const programme = storage.getActiveProgramme();
+  const { hasActiveWorkout, workout: activeWkt, status: activeStatus } = ctx;
   const streak = getCurrentStreak(history);
   const weeklyCount = getWeeklyWorkoutCount(history);
   const goalDays = profile?.daysPerWeek || 3;
@@ -36,6 +39,26 @@ export default function Home() {
 
   const nextProg = getNextProgrammeDay();
 
+  function startNewWorkout() {
+    if (hasActiveWorkout) {
+      if (confirm('You have an active workout. Start a new one? Your saved progress will be lost.')) {
+        ctx.clearActiveWorkout();
+        navigate('/new-workout');
+      }
+    } else {
+      navigate('/new-workout');
+    }
+  }
+
+  function resumeActiveWorkout() {
+    if (activeStatus === 'in_progress') {
+      navigate('/workout/active');
+    } else {
+      // status === 'generated' — NewWorkout will restore from context
+      navigate('/new-workout');
+    }
+  }
+
   const mainCards = [
     {
       icon: Play,
@@ -44,7 +67,7 @@ export default function Home() {
       sub: 'One-off session, fully custom',
       color: '#3b82f6',
       bg: '#1e2d4a',
-      path: '/new-workout',
+      onClick: startNewWorkout,
     },
     programme && {
       icon: RefreshCw,
@@ -53,7 +76,7 @@ export default function Home() {
       sub: programme.name || 'Active programme',
       color: '#10b981',
       bg: '#1a2e28',
-      path: '/programme/continue',
+      onClick: () => navigate('/programme/continue'),
     },
     {
       icon: Plus,
@@ -62,7 +85,7 @@ export default function Home() {
       sub: 'Create a structured multi-week plan',
       color: '#f97316',
       bg: '#2e1f0f',
-      path: '/programme/build',
+      onClick: () => navigate('/programme/build'),
     },
     {
       icon: ClipboardList,
@@ -71,7 +94,7 @@ export default function Home() {
       sub: 'History, results, PRs',
       color: '#8b5cf6',
       bg: '#1e1a2e',
-      path: '/history',
+      onClick: () => navigate('/history'),
     },
     {
       icon: TrendingUp,
@@ -80,7 +103,7 @@ export default function Home() {
       sub: 'Stats, charts, measurements',
       color: '#06b6d4',
       bg: '#0f2027',
-      path: '/progress',
+      onClick: () => navigate('/progress'),
     },
     {
       icon: Settings,
@@ -89,7 +112,7 @@ export default function Home() {
       sub: 'Goals, equipment, preferences',
       color: '#64748b',
       bg: '#1a1a24',
-      path: '/profile',
+      onClick: () => navigate('/profile'),
     },
   ].filter(Boolean);
 
@@ -138,6 +161,44 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Active workout banner */}
+      {hasActiveWorkout && (
+        <div className="px-4 mb-2">
+          <div
+            className="p-4 rounded-2xl animate-fade-in"
+            style={{
+              background: activeStatus === 'in_progress' ? '#1a2340' : '#1e1a2e',
+              border: `1px solid ${activeStatus === 'in_progress' ? '#3b82f6' : '#8b5cf6'}`,
+            }}
+          >
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Dumbbell size={16} style={{ color: activeStatus === 'in_progress' ? '#3b82f6' : '#8b5cf6' }} />
+                <span className="text-xs font-semibold" style={{ color: activeStatus === 'in_progress' ? '#3b82f6' : '#8b5cf6' }}>
+                  {activeStatus === 'in_progress' ? 'WORKOUT IN PROGRESS' : 'WORKOUT READY'}
+                </span>
+              </div>
+            </div>
+            <div className="font-bold text-base mb-0.5" style={{ color: '#f1f5f9' }}>
+              {activeWkt?.session_name || activeWkt?.sessionConfig?.focus || 'Your workout'}
+            </div>
+            <div className="text-sm mb-3" style={{ color: '#64748b' }}>
+              {activeStatus === 'in_progress'
+                ? `Exercise ${ctx.currentExerciseIndex + 1} of ${activeWkt?.exercises?.length ?? '?'} — paused`
+                : `${activeWkt?.exercises?.length ?? '?'} exercises · ${activeWkt?.estimated_duration_mins ?? '?'} min`
+              }
+            </div>
+            <button
+              onClick={resumeActiveWorkout}
+              className="w-full py-2.5 rounded-xl font-semibold text-sm btn-press"
+              style={{ background: activeStatus === 'in_progress' ? '#3b82f6' : '#8b5cf6', color: '#fff' }}
+            >
+              {activeStatus === 'in_progress' ? 'Resume workout' : 'View workout'}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Programme card (if active) */}
       {programme && nextProg && (
         <div className="px-4 mb-2">
@@ -176,8 +237,8 @@ export default function Home() {
       <div className="px-4 flex flex-col gap-2.5 mt-2">
         {mainCards.map(card => (
           <button
-            key={card.path}
-            onClick={() => navigate(card.path)}
+            key={card.title}
+            onClick={card.onClick}
             className="flex items-center gap-4 px-4 py-4 rounded-2xl text-left btn-press transition-all"
             style={{
               background: card.bg,

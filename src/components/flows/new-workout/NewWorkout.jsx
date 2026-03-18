@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, ChevronLeft, RefreshCw } from 'lucide-react';
 import ScreenHeader from '../../shared/ScreenHeader';
@@ -7,6 +7,7 @@ import ErrorState from '../../shared/ErrorState';
 import WorkoutDisplay from './WorkoutDisplay';
 import { storage } from '../../../utils/storage';
 import { generateWorkout } from '../../../api/anthropic';
+import { useActiveWorkout } from '../../../context/ActiveWorkoutContext';
 
 const FOCUS_OPTIONS = [
   { id: 'strength', emoji: '💪', label: 'Strength & Muscle', sub: 'Build size and power' },
@@ -37,6 +38,7 @@ const AVOID_CHIPS = ['Lower back', 'Knees', 'Shoulders', 'Wrists', 'Hips', 'Skip
 
 export default function NewWorkout() {
   const navigate = useNavigate();
+  const ctx = useActiveWorkout();
   const [step, setStep] = useState(0);
   const [config, setConfig] = useState({
     focus: '', customFocus: '', location: '', duration: 45,
@@ -45,6 +47,13 @@ export default function NewWorkout() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [workout, setWorkout] = useState(null);
+
+  // Restore previously generated workout if navigating back to it
+  useEffect(() => {
+    if (ctx.status === 'generated' && ctx.workout) {
+      setWorkout(ctx.workout);
+    }
+  }, []);
 
   const totalSteps = 6;
 
@@ -76,7 +85,9 @@ export default function NewWorkout() {
         user_notes_today: config.notes || null,
       };
       const result = await generateWorkout(profile, sessionConfig, history.slice(0, 3));
-      setWorkout({ ...result, sessionConfig, generatedAt: new Date().toISOString() });
+      const w = { ...result, sessionConfig, generatedAt: new Date().toISOString() };
+      ctx.setWorkoutGenerated(w);
+      setWorkout(w);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -114,7 +125,10 @@ export default function NewWorkout() {
     return (
       <WorkoutDisplay
         workout={workout}
-        onStart={() => navigate('/workout/active', { state: { workout } })}
+        onStart={() => {
+          ctx.startWorkout();
+          navigate('/workout/active');
+        }}
         onRegenerate={regenerate}
         onBack={() => setWorkout(null)}
       />

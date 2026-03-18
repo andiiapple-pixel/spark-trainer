@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts';
 import { Plus, Trophy, TrendingUp, TrendingDown, HelpCircle, Trash2 } from 'lucide-react';
 import { storage, formatDate, getCurrentStreak, getWeeklyWorkoutCount } from '../../utils/storage';
+import { data as dataApi } from '../../services/api';
 
 const MUSCLE_GROUPS = ['Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps', 'Legs', 'Core'];
 
@@ -47,7 +48,7 @@ function VolumeChartHeader() {
   );
 }
 
-function WeightLogEntries({ metrics }) {
+function WeightLogEntries({ metrics, onDelete }) {
   const [expanded, setExpanded] = useState(false);
   const entries = [...metrics].filter(m => m.weight).reverse();
   if (!entries.length) return null;
@@ -79,7 +80,7 @@ function WeightLogEntries({ metrics }) {
             {new Date(m.date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
           </span>
           <button
-            onClick={() => { storage.deleteHealthMetric(m.id); window.location.reload(); }}
+            onClick={() => onDelete(m.id)}
             className="p-1.5 rounded-lg btn-press"
             style={{ color: '#ef4444' }}
           >
@@ -103,15 +104,71 @@ function CustomTooltip({ active, payload, label }) {
   );
 }
 
+// Map API workout DB row → history shape used for stats
+function adaptApiWorkout(w) {
+  const wData = w.workout_data
+    ? (typeof w.workout_data === 'string' ? JSON.parse(w.workout_data) : w.workout_data)
+    : {};
+  return {
+    id: w.id,
+    type: w.workout_type || wData.sessionConfig?.focus || 'custom',
+    duration_mins: w.duration_mins || 0,
+    total_volume: w.total_volume_kg,
+    savedAt: w.completed_at,
+    exercises: wData.exercises || [],
+    user_notes_today: w.user_notes_today,
+  };
+}
+
 export default function Progress() {
   const [activeTab, setActiveTab] = useState('body');
   const [showWeightForm, setShowWeightForm] = useState(false);
   const [newWeight, setNewWeight] = useState('');
 
-  const metrics = storage.getHealthMetrics();
-  const history = storage.getWorkoutHistory();
-  const prs = storage.getPersonalRecords();
   const profile = storage.getProfile();
+
+  // Data loaded from API, seeded from localStorage while loading
+  const [metrics, setMetrics] = useState(() => storage.getHealthMetrics());
+  const [history, setHistory] = useState(() => storage.getWorkoutHistory());
+  const [prs, setPrs] = useState(() => storage.getPersonalRecords());
+
+  useEffect(() => {
+    dataApi.getHealthMetrics()
+      .then(res => {
+        const apiMetrics = (res.metrics || []).map(m => ({
+          id: m.id,
+          date: m.logged_at,
+          weight: m.weight_kg ? String(m.weight_kg) : null,
+        }));
+        if (apiMetrics.length > 0) setMetrics(apiMetrics);
+      })
+      .catch(() => {});
+
+    dataApi.getWorkouts({ limit: 100 })
+      .then(res => {
+        const workouts = (res.workouts || []).map(adaptApiWorkout);
+        if (workouts.length > 0) setHistory(workouts);
+      })
+      .catch(() => {});
+
+    dataApi.getPersonalRecords()
+      .then(res => {
+        const records = res.records || [];
+        if (records.length > 0) {
+          const prMap = {};
+          records.forEach(r => {
+            prMap[r.exercise_name] = {
+              exerciseName: r.exercise_name,
+              weight: r.weight_kg,
+              reps: r.reps,
+              date: r.set_at,
+            };
+          });
+          setPrs(prMap);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const streak = getCurrentStreak(history);
   const weeklyCount = getWeeklyWorkoutCount(history);
@@ -165,11 +222,30 @@ export default function Progress() {
     return Math.round(bmr * (multipliers[profile.daysPerWeek] || 1.55));
   })() : null;
 
-  function logWeight() {
+  async function logWeight() {
     if (!newWeight) return;
-    storage.addHealthMetric({ weight: newWeight });
+    const val = parseFloat(newWeight);
+    if (isNaN(val)) return;
+    // Optimistic update
+    const localEntry = { id: Date.now(), date: new Date().toISOString(), weight: String(val) };
+    setMetrics(prev => [...prev, localEntry]);
+    storage.addHealthMetric({ weight: String(val) });
     setNewWeight('');
     setShowWeightForm(false);
+    // Persist to API
+    dataApi.saveHealthMetric({ weight_kg: val })
+      .then(res => {
+        if (res.metric) {
+          const saved = { id: res.metric.id, date: res.metric.logged_at, weight: String(res.metric.weight_kg) };
+          setMetrics(prev => [...prev.filter(m => m.id !== localEntry.id), saved]);
+        }
+      })
+      .catch(() => {});
+  }
+
+  function deleteMetric(id) {
+    setMetrics(prev => prev.filter(m => m.id !== id));
+    dataApi.deleteHealthMetric(id).catch(() => {});
   }
 
   const tabs = ['body', 'training', 'prs'];
@@ -281,7 +357,7 @@ export default function Progress() {
             )}
 
             {/* Weight log entries */}
-            <WeightLogEntries metrics={metrics} />
+            <WeightLogEntries metrics={metrics} onDelete={deleteMetric} />
 
             {/* BMI / TDEE */}
             <div className="grid grid-cols-2 gap-3">

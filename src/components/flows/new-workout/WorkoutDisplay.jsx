@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, RefreshCw, Play, ChevronLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ChevronDown, ChevronUp, RefreshCw, Play, ChevronLeft, Home } from 'lucide-react';
 
 function ExerciseCard({ exercise, index }) {
   const [expanded, setExpanded] = useState(false);
@@ -96,6 +97,7 @@ function CollapsibleSection({ title, children, defaultOpen = false }) {
 }
 
 export default function WorkoutDisplay({ workout, onStart, onRegenerate, onBack }) {
+  const navigate = useNavigate();
   const [regenNote, setRegenNote] = useState('');
   const [showRegenInput, setShowRegenInput] = useState(false);
 
@@ -107,9 +109,14 @@ export default function WorkoutDisplay({ workout, onStart, onRegenerate, onBack 
           <ChevronLeft size={22} />
         </button>
         <h1 className="text-lg font-bold flex-1" style={{ color: '#f1f5f9' }}>Your Workout</h1>
-        <div className="flex gap-3 text-xs" style={{ color: '#64748b' }}>
-          <span>⏱ {workout.estimated_duration_mins} min</span>
-          <span>🔥 {workout.estimated_calories_range} cal</span>
+        <div className="flex items-center gap-3">
+          <div className="flex gap-3 text-xs" style={{ color: '#64748b' }}>
+            <span>⏱ {workout.estimated_duration_mins} min</span>
+            <span>🔥 {workout.estimated_calories_range} cal</span>
+          </div>
+          <button onClick={() => navigate('/')} className="btn-press" style={{ color: '#64748b' }}>
+            <Home size={18} />
+          </button>
         </div>
       </div>
 

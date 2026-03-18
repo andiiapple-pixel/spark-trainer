@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { storage } from '../../utils/storage';
+import { data as dataApi } from '../../services/api';
+import { useAuth } from '../../auth/AuthContext';
 
 const GOALS = [
   { id: 'muscle', emoji: '💪', label: 'Build muscle & strength' },
@@ -33,7 +35,9 @@ const STRESS_OPTIONS = ['Low', 'Moderate', 'High', 'Very high'];
 const DIET_OPTIONS = ['Standard / no restrictions', 'Vegetarian', 'Vegan', 'High protein', 'Keto / Low carb', 'Intermittent fasting'];
 
 export default function Onboarding({ onComplete }) {
+  const { setProfile: setAuthProfile } = useAuth();
   const [step, setStep] = useState(0);
+  const [completing, setCompleting] = useState(false);
   const [profile, setProfile] = useState({
     name: '', age: '', sex: '',
     heightCm: '', weightKg: '',
@@ -56,13 +60,47 @@ export default function Onboarding({ onComplete }) {
     return [...arr.filter(v => v !== 'None'), value];
   }
 
-  function handleComplete() {
-    const finalProfile = {
-      ...profile,
-      createdAt: new Date().toISOString(),
-    };
+  async function handleComplete() {
+    setCompleting(true);
+    const finalProfile = { ...profile, createdAt: new Date().toISOString() };
     storage.setProfile(finalProfile);
-    if (onComplete) onComplete(finalProfile);
+    try {
+      const payload = {
+        full_name: finalProfile.name || null,
+        age: finalProfile.age ? Number(finalProfile.age) : null,
+        biological_sex: finalProfile.sex || null,
+        height_cm: finalProfile.heightCm ? Number(finalProfile.heightCm) : null,
+        weight_kg: finalProfile.weightKg ? Number(finalProfile.weightKg) : null,
+        fitness_goal: finalProfile.goal || null,
+        experience_level: finalProfile.experience || null,
+        injuries: JSON.stringify(Array.isArray(finalProfile.injuries) ? finalProfile.injuries : []),
+        equipment_access: finalProfile.equipment || null,
+        training_days_per_week: finalProfile.daysPerWeek || null,
+        preferred_session_mins: finalProfile.sessionLength || null,
+        sleep_quality: finalProfile.sleep || null,
+        stress_level: finalProfile.stress || null,
+        diet_style: finalProfile.diet || null,
+        extra_data: {
+          name: finalProfile.name || null,
+          injuryNotes: finalProfile.injuryNotes || null,
+          homeEquipment: finalProfile.homeEquipment || [],
+          createdAt: finalProfile.createdAt,
+        },
+      };
+      console.log('[Onboarding] saving profile to API…');
+      const { profile: saved } = await dataApi.saveProfile(payload);
+      // Use setAuthProfile directly — updateProfile is a no-op when prev is null (new user)
+      if (saved) setAuthProfile(saved);
+      console.log('[Onboarding] API save success');
+    } catch (err) {
+      // API failure must not block navigation — data is in localStorage as fallback
+      console.error('[Onboarding] API save failed (proceeding anyway):', err);
+    } finally {
+      setCompleting(false);
+      // Always navigate into the app — even if the API call failed
+      console.log('[Onboarding] calling onComplete');
+      if (onComplete) onComplete(finalProfile);
+    }
   }
 
   const steps = [
@@ -418,16 +456,17 @@ export default function Onboarding({ onComplete }) {
         )}
         <button
           onClick={() => isLast ? handleComplete() : setStep(s => s + 1)}
-          disabled={!canProceed}
+          disabled={!canProceed || completing}
           className="flex-1 py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 btn-press transition-all"
           style={{
             background: canProceed ? '#3b82f6' : '#1e1e2a',
             color: canProceed ? '#fff' : '#475569',
             border: canProceed ? 'none' : '1px solid #2a2a3a',
+            opacity: completing ? 0.7 : 1,
           }}
         >
           {isLast ? (
-            <>You&apos;re all set — let&apos;s go! 🚀</>
+            completing ? 'Saving…' : <>You&apos;re all set — let&apos;s go! 🚀</>
           ) : (
             <>Continue <ChevronRight size={18} /></>
           )}

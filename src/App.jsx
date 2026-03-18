@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './auth/AuthContext';
+import { ActiveWorkoutProvider } from './context/ActiveWorkoutContext';
 import ProtectedRoute from './auth/ProtectedRoute';
 import LocalStorageMigration from './auth/LocalStorageMigration';
 import BottomBar from './components/shared/BottomBar';
@@ -43,12 +44,20 @@ function AppShell() {
   const { user, profile, isLoading } = useAuth();
   const [hasProfile, setHasProfile] = useState(null);
   const [showMigration, setShowMigration] = useState(false);
+  // Guard so the effect only makes the initial hasProfile determination once.
+  // After onComplete() sets hasProfile=true, we must not let a profile change
+  // (e.g. from setProfile inside Onboarding) flip it back to false.
+  const profileDetermined = useRef(false);
 
   useEffect(() => {
     if (!isLoading) {
-      // Profile exists when user has completed onboarding (has age/goal etc.)
-      const profileComplete = !!(profile?.fitness_goal || profile?.extra_data?.name);
-      setHasProfile(profileComplete);
+      // Only determine hasProfile once — after that, onComplete() owns the transition
+      if (!profileDetermined.current) {
+        profileDetermined.current = true;
+        const profileComplete = !!(profile?.fitness_goal || profile?.extra_data?.name);
+        console.log('[AppShell] initial profile check → complete:', profileComplete, profile);
+        setHasProfile(profileComplete);
+      }
       // Show migration prompt once per session after login
       if (!sessionStorage.getItem('migration_checked')) {
         sessionStorage.setItem('migration_checked', '1');
@@ -57,12 +66,16 @@ function AppShell() {
     }
   }, [isLoading, profile]);
 
-  if (isLoading || hasProfile === null) return null;
+  if (isLoading || hasProfile === null) {
+    console.log('[AppShell] returning null — isLoading:', isLoading, 'hasProfile:', hasProfile);
+    return null;
+  }
 
   if (!hasProfile) {
+    console.log('[AppShell] rendering Onboarding');
     return (
       <div style={{ background: '#0f0f14', minHeight: '100vh' }}>
-        <Onboarding onComplete={() => setHasProfile(true)} />
+        <Onboarding onComplete={() => { console.log('[AppShell] onComplete called → setting hasProfile=true'); setHasProfile(true); }} />
         {showMigration && <LocalStorageMigration onDone={() => setShowMigration(false)} />}
       </div>
     );
@@ -92,21 +105,23 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
-          {/* Public auth routes */}
-          <Route path="/login"            element={<LoginScreen />} />
-          <Route path="/register"         element={<RegisterScreen />} />
-          <Route path="/verify-email"     element={<VerifyEmailScreen />} />
-          <Route path="/forgot-password"  element={<ForgotPasswordScreen />} />
-          <Route path="/reset-password"   element={<ResetPasswordScreen />} />
+        <ActiveWorkoutProvider>
+          <Routes>
+            {/* Public auth routes */}
+            <Route path="/login"            element={<LoginScreen />} />
+            <Route path="/register"         element={<RegisterScreen />} />
+            <Route path="/verify-email"     element={<VerifyEmailScreen />} />
+            <Route path="/forgot-password"  element={<ForgotPasswordScreen />} />
+            <Route path="/reset-password"   element={<ResetPasswordScreen />} />
 
-          {/* Protected app routes */}
-          <Route path="/*" element={
-            <ProtectedRoute>
-              <AppShell />
-            </ProtectedRoute>
-          } />
-        </Routes>
+            {/* Protected app routes */}
+            <Route path="/*" element={
+              <ProtectedRoute>
+                <AppShell />
+              </ProtectedRoute>
+            } />
+          </Routes>
+        </ActiveWorkoutProvider>
       </AuthProvider>
     </BrowserRouter>
   );

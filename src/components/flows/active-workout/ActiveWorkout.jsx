@@ -1,32 +1,25 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, X, SkipForward, ChevronDown, ChevronUp, Timer } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ChevronLeft, ChevronRight, X, SkipForward, ChevronDown, ChevronUp, Home } from 'lucide-react';
 import { storage } from '../../../utils/storage';
+import { data as dataApi } from '../../../services/api';
 import { generateEndOfWorkoutFeedback } from '../../../api/anthropic';
+import { useActiveWorkout } from '../../../context/ActiveWorkoutContext';
 import EndOfWorkout from './EndOfWorkout';
 
-function RestTimer({ seconds, onSkip, onExtend }) {
+function RestTimer({ seconds, onSkip }) {
   const [remaining, setRemaining] = useState(seconds);
-  const [running, setRunning] = useState(true);
+
+  useEffect(() => { setRemaining(seconds); }, [seconds]);
 
   useEffect(() => {
-    setRemaining(seconds);
-    setRunning(true);
-  }, [seconds]);
-
-  useEffect(() => {
-    if (!running || remaining <= 0) return;
+    if (remaining <= 0) { onSkip?.(); return; }
     const t = setTimeout(() => setRemaining(r => r - 1), 1000);
     return () => clearTimeout(t);
-  }, [remaining, running]);
-
-  useEffect(() => {
-    if (remaining <= 0) onSkip?.();
   }, [remaining]);
 
   const radius = 40;
   const circ = 2 * Math.PI * radius;
-  const progress = remaining / seconds;
 
   return (
     <div className="flex flex-col items-center gap-4 py-6 animate-fade-in">
@@ -41,7 +34,7 @@ function RestTimer({ seconds, onSkip, onExtend }) {
             strokeWidth="8"
             strokeLinecap="round"
             strokeDasharray={circ}
-            strokeDashoffset={circ * (1 - progress)}
+            strokeDashoffset={circ * (1 - remaining / seconds)}
             transform="rotate(-90 56 56)"
             style={{ transition: 'stroke-dashoffset 1s linear' }}
           />
@@ -73,67 +66,73 @@ function RestTimer({ seconds, onSkip, onExtend }) {
 }
 
 export default function ActiveWorkout() {
-  const location = useLocation();
   const navigate = useNavigate();
-  const workout = location.state?.workout;
+  const ctx = useActiveWorkout();
 
-  const [exerciseIndex, setExerciseIndex] = useState(0);
-  const [setLogs, setSetLogs] = useState({}); // { exerciseIndex: [{reps, weight}] }
+  // All workout progress state lives in context.
+  // We only keep UI-only state local.
   const [resting, setResting] = useState(false);
   const [restSeconds, setRestSeconds] = useState(60);
   const [showCues, setShowCues] = useState(false);
-  const [skippedExercises, setSkippedExercises] = useState([]);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [done, setDone] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const [rating, setRating] = useState(0);
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
+  const [showExitModal, setShowExitModal] = useState(false);
 
-  const startTime = useRef(Date.now());
   const timerRef = useRef(null);
 
+  // Timer: tick every second via context (so elapsed time is always current in context)
   useEffect(() => {
-    timerRef.current = setInterval(() => setElapsedSeconds(s => s + 1), 1000);
+    if (done) return;
+    timerRef.current = setInterval(ctx.tickTimer, 1000);
     return () => clearInterval(timerRef.current);
-  }, []);
+  }, [done, ctx.tickTimer]);
 
-  if (!workout) {
+  // Guard: no active workout in context → go home
+  if (!ctx.status || !ctx.workout) {
     navigate('/');
     return null;
   }
 
+  const workout = ctx.workout;
   const exercises = workout.exercises || [];
+  const exerciseIndex = ctx.currentExerciseIndex;
   const currentEx = exercises[exerciseIndex];
-  const currentLogs = setLogs[exerciseIndex] || [];
+  const currentLogs = ctx.completedSets[exerciseIndex] || [];
   const totalSets = currentEx?.sets || 3;
   const completedSets = currentLogs.length;
 
   function logSet(entry) {
-    const logs = setLogs[exerciseIndex] || [];
-    const newLogs = [...logs, { ...entry, timestamp: Date.now() }];
-    setSetLogs(prev => ({ ...prev, [exerciseIndex]: newLogs }));
+    const newCount = currentLogs.length + 1;
+    ctx.logSet(exerciseIndex, entry);
 
-    // Check PR for weighted exercises
-    if (entry.weight && parseFloat(entry.weight) > 0) {
-      storage.updatePR(currentEx.name, parseFloat(entry.weight), parseInt(entry.reps), new Date().toISOString());
+    // Check personal record for weighted exercises
+    if (entry.weight && parseFloat(entry.weight) > 0 && currentEx?.name) {
+      storage.updatePR(
+        currentEx.name,
+        parseFloat(entry.weight),
+        parseInt(entry.reps),
+        new Date().toISOString()
+      );
     }
 
-    if (newLogs.length >= totalSets) {
+    if (newCount >= totalSets) {
       setResting(true);
-      setRestSeconds(currentEx.rest_seconds || 60);
+      setRestSeconds(currentEx?.rest_seconds || 60);
     }
   }
 
   function skipExercise(reason) {
-    setSkippedExercises(prev => [...prev, { index: exerciseIndex, name: currentEx.name, reason }]);
+    ctx.skipExercise({ index: exerciseIndex, name: currentEx?.name, reason });
     goNext();
   }
 
   function goNext() {
     setResting(false);
     if (exerciseIndex < exercises.length - 1) {
-      setExerciseIndex(i => i + 1);
+      ctx.setExerciseIndex(exerciseIndex + 1);
       setShowCues(false);
     } else {
       finishWorkout();
@@ -143,32 +142,45 @@ export default function ActiveWorkout() {
   function goPrev() {
     setResting(false);
     if (exerciseIndex > 0) {
-      setExerciseIndex(i => i - 1);
+      ctx.setExerciseIndex(exerciseIndex - 1);
       setShowCues(false);
     }
+  }
+
+  // Home button: context is already up to date, just navigate
+  function goHome() {
+    navigate('/');
+  }
+
+  function cancelWorkout() {
+    clearInterval(timerRef.current);
+    ctx.clearActiveWorkout();
+    navigate('/');
   }
 
   async function finishWorkout(early = false) {
     clearInterval(timerRef.current);
     const profile = storage.getProfile();
+
     const logged = exercises.map((ex, i) => ({
       name: ex.name,
       prescribed: { sets: ex.sets, reps: ex.reps, weight: ex.weight_guidance },
-      logged: setLogs[i] || [],
-      skipped: skippedExercises.some(s => s.index === i),
+      logged: ctx.completedSets[i] || [],
+      skipped: ctx.skippedExercises.some(s => s.index === i),
     }));
 
-    // Generate AI feedback
     let aiFeedback = null;
     try {
       aiFeedback = await generateEndOfWorkoutFeedback(
         profile,
         workout,
-        { logged, elapsed_mins: Math.round(elapsedSeconds / 60), early },
+        { logged, elapsed_mins: Math.round(ctx.elapsedSeconds / 60), early },
         rating || 3,
         workout.sessionConfig?.user_notes_today
       );
-    } catch {}
+    } catch {
+      // Non-fatal: workout can be saved without AI feedback
+    }
 
     setFeedback(aiFeedback);
     setDone(true);
@@ -176,27 +188,39 @@ export default function ActiveWorkout() {
 
   async function saveWorkout() {
     setSaving(true);
-    const totalVolume = Object.values(setLogs).flat().reduce((acc, s) => {
+
+    const totalVolume = Object.values(ctx.completedSets).flat().reduce((acc, s) => {
       return acc + (parseFloat(s.weight) || 0) * (parseInt(s.reps) || 1);
     }, 0);
 
     const entry = {
       type: workout.sessionConfig?.focus || 'workout',
-      duration_mins: Math.round(elapsedSeconds / 60),
+      duration_mins: Math.round(ctx.elapsedSeconds / 60),
       exercises: exercises.map((ex, i) => ({
         name: ex.name,
-        sets_logged: setLogs[i] || [],
+        sets_logged: ctx.completedSets[i] || [],
         prescribed: ex,
       })),
-      skipped: skippedExercises,
+      skipped: ctx.skippedExercises,
       total_volume: totalVolume,
       rating,
       notes,
       trainer_feedback: feedback,
       user_notes_today: workout.sessionConfig?.user_notes_today || null,
       estimated_calories: workout.estimated_calories_range,
+      savedAt: new Date().toISOString(),
     };
+
+    // Save to localStorage immediately
     storage.addWorkout(entry);
+
+    // Clear active workout from context + localStorage
+    ctx.clearActiveWorkout();
+
+    // Save to API in background (non-blocking)
+    dataApi.saveWorkout(entry).catch(err =>
+      console.warn('[ActiveWorkout] API save failed (data still in localStorage):', err)
+    );
 
     // Update programme state if applicable
     const prog = storage.getActiveProgramme();
@@ -209,14 +233,15 @@ export default function ActiveWorkout() {
     navigate('/');
   }
 
-  const formatTime = (s) => `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
+  const formatTime = (s) =>
+    `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
 
   if (done) {
     return (
       <EndOfWorkout
-        elapsedSeconds={elapsedSeconds}
+        elapsedSeconds={ctx.elapsedSeconds}
         exercises={exercises}
-        setLogs={setLogs}
+        setLogs={ctx.completedSets}
         feedback={feedback}
         rating={rating}
         onRating={setRating}
@@ -230,23 +255,52 @@ export default function ActiveWorkout() {
 
   return (
     <div className="flex flex-col min-h-screen max-w-[430px] mx-auto">
+      {/* Exit modal */}
+      {showExitModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, zIndex: 100 }}>
+          <div style={{ background: '#1e1e2a', border: '1px solid #2a2a3a', borderRadius: 16, padding: 24, width: '100%', maxWidth: 360 }}>
+            <h3 style={{ color: '#f1f5f9', fontSize: 18, fontWeight: 700, margin: '0 0 8px' }}>Leave workout?</h3>
+            <p style={{ color: '#94a3b8', fontSize: 14, lineHeight: 1.6, margin: '0 0 20px' }}>
+              Choose what to do with your current session.
+            </p>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => { setShowExitModal(false); finishWorkout(true); }}
+                style={{ padding: 12, background: '#3b82f6', border: 'none', borderRadius: 10, color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}
+              >
+                Finish early &amp; save results
+              </button>
+              <button
+                onClick={cancelWorkout}
+                style={{ padding: 12, background: '#0f0f14', border: '1px solid #ef444450', borderRadius: 10, color: '#ef4444', fontSize: 14, fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}
+              >
+                Cancel workout — discard progress
+              </button>
+              <button
+                onClick={() => setShowExitModal(false)}
+                style={{ padding: 12, background: 'none', border: '1px solid #2a2a3a', borderRadius: 10, color: '#64748b', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+              >
+                Keep going
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Top bar */}
       <div
         className="flex items-center gap-3 px-4 py-3"
         style={{ background: '#0f0f14', borderBottom: '1px solid #1a1a24' }}
       >
-        <button
-          onClick={() => { if (confirm('Finish early? Your progress will be saved.')) finishWorkout(true); }}
-          className="p-1 btn-press" style={{ color: '#64748b' }}
-        >
-          <X size={20} />
+        <button onClick={goHome} className="p-1 btn-press" style={{ color: '#64748b' }} title="Go home (workout saved)">
+          <Home size={20} />
         </button>
         <div className="flex-1">
           <div className="h-1.5 rounded-full overflow-hidden" style={{ background: '#1e1e2a' }}>
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{
-                width: `${((exerciseIndex + completedSets / totalSets) / exercises.length) * 100}%`,
+                width: `${((exerciseIndex + completedSets / totalSets) / Math.max(exercises.length, 1)) * 100}%`,
                 background: '#3b82f6',
               }}
             />
@@ -256,10 +310,13 @@ export default function ActiveWorkout() {
               Exercise {exerciseIndex + 1} of {exercises.length}
             </span>
             <span className="text-xs font-mono" style={{ color: '#475569' }}>
-              {formatTime(elapsedSeconds)}
+              {formatTime(ctx.elapsedSeconds)}
             </span>
           </div>
         </div>
+        <button onClick={() => setShowExitModal(true)} className="p-1 btn-press" style={{ color: '#64748b' }}>
+          <X size={20} />
+        </button>
       </div>
 
       {/* Main content */}
@@ -274,7 +331,7 @@ export default function ActiveWorkout() {
           />
         ) : (
           <>
-            {/* Exercise name */}
+            {/* Exercise name + meta */}
             <div className="mb-4 animate-fade-in">
               <div className="flex flex-wrap gap-1 mb-2">
                 {(currentEx?.muscle_groups || []).map(mg => (
@@ -284,7 +341,7 @@ export default function ActiveWorkout() {
                 ))}
               </div>
               <h1 className="text-3xl font-bold leading-tight" style={{ color: '#f1f5f9' }}>
-                {currentEx?.name}
+                {currentEx?.name || '—'}
               </h1>
               <div className="flex gap-4 mt-2 text-sm">
                 <span style={{ color: '#f97316' }}>
@@ -295,7 +352,7 @@ export default function ActiveWorkout() {
               <p className="text-sm mt-1" style={{ color: '#64748b' }}>{currentEx?.weight_guidance}</p>
             </div>
 
-            {/* Set tracker */}
+            {/* Set progress dots */}
             <div className="flex gap-2 mb-6">
               {Array.from({ length: totalSets }).map((_, i) => (
                 <div
@@ -306,7 +363,7 @@ export default function ActiveWorkout() {
               ))}
             </div>
 
-            {/* Log set input */}
+            {/* Set logger */}
             <SetLogger
               onLog={logSet}
               setNumber={completedSets + 1}
@@ -323,11 +380,7 @@ export default function ActiveWorkout() {
                   const type = getExerciseType(currentEx);
                   const summary = EXERCISE_TYPE_CONFIG[type]?.summary(s) || '';
                   return (
-                    <div
-                      key={i}
-                      className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm"
-                      style={{ background: '#1e1e2a' }}
-                    >
+                    <div key={i} className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm" style={{ background: '#1e1e2a' }}>
                       <span style={{ color: '#3b82f6' }}>
                         {type === 'cardio' ? `Round ${i + 1}` : `Set ${i + 1}`}
                       </span>
@@ -339,7 +392,7 @@ export default function ActiveWorkout() {
             )}
 
             {/* Form cues toggle */}
-            {currentEx?.form_cues?.length > 0 && (
+            {(currentEx?.form_cues?.length ?? 0) > 0 && (
               <div className="mt-4">
                 <button
                   onClick={() => setShowCues(c => !c)}
@@ -365,18 +418,12 @@ export default function ActiveWorkout() {
       </div>
 
       {/* Bottom nav */}
-      <div
-        className="flex items-center gap-2 px-4 py-4"
-        style={{ background: '#0f0f14', borderTop: '1px solid #1a1a24' }}
-      >
+      <div className="flex items-center gap-2 px-4 py-4" style={{ background: '#0f0f14', borderTop: '1px solid #1a1a24' }}>
         <button
           onClick={goPrev}
           disabled={exerciseIndex === 0}
           className="p-3 rounded-xl btn-press"
-          style={{
-            background: '#1e1e2a',
-            color: exerciseIndex === 0 ? '#2a2a3a' : '#94a3b8',
-          }}
+          style={{ background: '#1e1e2a', color: exerciseIndex === 0 ? '#2a2a3a' : '#94a3b8' }}
         >
           <ChevronLeft size={20} />
         </button>
@@ -403,19 +450,20 @@ export default function ActiveWorkout() {
   );
 }
 
-// Detect exercise type from name + weight_guidance
+// ─── Exercise type detection ───────────────────────────────────────────────────
+
 function getExerciseType(exercise) {
   const name = (exercise?.name || '').toLowerCase();
   const guidance = (exercise?.weight_guidance || '').toLowerCase();
-  const reps = (exercise?.reps || '').toLowerCase();
+  const reps = (exercise?.reps || '').toString().toLowerCase();
 
-  const cardioKeywords = ['cycling', 'cycle', 'bike', 'rowing', 'row', 'run', 'sprint', 'jog', 'walk', 'elliptical', 'stair', 'ski erg', 'assault bike', 'air bike', 'treadmill', 'swim'];
-  const timedKeywords = ['plank', 'hold', 'wall sit', 'dead hang', 'hollow hold', 'l-sit', 'isometric', 'farmer', 'carry'];
-  const bodyweightKeywords = ['push-up', 'pushup', 'pull-up', 'pullup', 'chin-up', 'chinup', 'dip', 'burpee', 'mountain climber', 'jumping jack'];
+  const cardioKw = ['cycling', 'cycle', 'bike', 'rowing', 'row', 'run', 'sprint', 'jog', 'walk', 'elliptical', 'stair', 'ski erg', 'assault bike', 'air bike', 'treadmill'];
+  const timedKw = ['plank', 'hold', 'wall sit', 'dead hang', 'hollow hold', 'l-sit', 'isometric', 'farmer', 'carry'];
+  const bwKw = ['push-up', 'pushup', 'pull-up', 'pullup', 'chin-up', 'chinup', 'dip', 'burpee', 'mountain climber', 'jumping jack'];
 
-  if (cardioKeywords.some(k => name.includes(k))) return 'cardio';
-  if (timedKeywords.some(k => name.includes(k)) || reps.includes('second') || reps.includes('sec')) return 'timed';
-  if (bodyweightKeywords.some(k => name.includes(k)) || guidance.includes('bodyweight')) return 'bodyweight';
+  if (cardioKw.some(k => name.includes(k))) return 'cardio';
+  if (timedKw.some(k => name.includes(k)) || reps.includes('second') || reps.includes('sec')) return 'timed';
+  if (bwKw.some(k => name.includes(k)) || guidance.includes('bodyweight')) return 'bodyweight';
   return 'weighted';
 }
 
@@ -452,6 +500,8 @@ const EXERCISE_TYPE_CONFIG = {
   },
 };
 
+// ─── Set logger ────────────────────────────────────────────────────────────────
+
 function SetLogger({ onLog, setNumber, totalSets, exercise, previousSet }) {
   const type = getExerciseType(exercise);
   const config = EXERCISE_TYPE_CONFIG[type];
@@ -461,9 +511,15 @@ function SetLogger({ onLog, setNumber, totalSets, exercise, previousSet }) {
     return init;
   });
 
+  // Reset vals when exercise changes (previousSet changes)
+  useEffect(() => {
+    const init = {};
+    config.fields.forEach(f => { init[f.key] = previousSet?.[f.key] || ''; });
+    setVals(init);
+  }, [exercise?.name]);
+
   function handleLog() {
     const entry = { ...vals };
-    // Fill defaults for empty fields
     config.fields.forEach(f => {
       if (!entry[f.key]) entry[f.key] = f.placeholder(exercise);
     });
@@ -476,10 +532,7 @@ function SetLogger({ onLog, setNumber, totalSets, exercise, previousSet }) {
   }
 
   return (
-    <div
-      className="p-4 rounded-2xl animate-fade-in"
-      style={{ background: '#1e1e2a', border: '1px solid #2a2a3a' }}
-    >
+    <div className="p-4 rounded-2xl animate-fade-in" style={{ background: '#1e1e2a', border: '1px solid #2a2a3a' }}>
       <p className="text-sm font-semibold mb-3" style={{ color: '#94a3b8' }}>
         {config.label(setNumber)} of {totalSets}
       </p>

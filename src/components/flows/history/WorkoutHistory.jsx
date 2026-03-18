@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, Trophy, Clock, Zap, ChevronLeft, ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronRight, Trophy, Clock, Zap, ChevronLeft } from 'lucide-react';
 import { storage, formatDate } from '../../../utils/storage';
+import { data as dataApi } from '../../../services/api';
 
 const FOCUS_LABELS = {
   strength: '💪 Strength',
@@ -138,10 +139,41 @@ function WorkoutDetail({ workout, onBack, onRepeat }) {
   );
 }
 
+// Map API DB row → component workout shape
+function adaptApiWorkout(w) {
+  const wData = w.workout_data
+    ? (typeof w.workout_data === 'string' ? JSON.parse(w.workout_data) : w.workout_data)
+    : {};
+  return {
+    id: w.id,
+    type: w.workout_type || wData.sessionConfig?.focus || 'custom',
+    duration_mins: w.duration_mins,
+    total_volume: w.total_volume_kg,
+    rating: w.energy_rating,
+    savedAt: w.completed_at,
+    exercises: wData.exercises || [],
+    trainer_feedback: w.trainer_feedback,
+    user_notes_today: w.user_notes_today,
+    notes: wData.notes,
+    session_name: wData.session_name,
+  };
+}
+
 export default function WorkoutHistory() {
   const navigate = useNavigate();
-  const history = storage.getWorkoutHistory();
+  const [history, setHistory] = useState(() => storage.getWorkoutHistory());
+  const [loadingApi, setLoadingApi] = useState(true);
   const [selected, setSelected] = useState(null);
+
+  useEffect(() => {
+    dataApi.getWorkouts({ limit: 100 })
+      .then(res => {
+        const workouts = (res.workouts || []).map(adaptApiWorkout);
+        if (workouts.length > 0) setHistory(workouts);
+      })
+      .catch(() => {}) // silently use localStorage fallback
+      .finally(() => setLoadingApi(false));
+  }, []);
 
   function handleRepeat(workout) {
     navigate('/new-workout');
@@ -156,7 +188,7 @@ export default function WorkoutHistory() {
       <div className="px-4 pt-12 pb-4">
         <h1 className="text-2xl font-bold" style={{ color: '#f1f5f9' }}>Past Workouts</h1>
         <p className="text-sm mt-1" style={{ color: '#64748b' }}>
-          {history.length} session{history.length !== 1 ? 's' : ''} logged
+          {loadingApi ? 'Loading...' : `${history.length} session${history.length !== 1 ? 's' : ''} logged`}
         </p>
       </div>
 
