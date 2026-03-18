@@ -1,17 +1,29 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './auth/AuthContext';
+import ProtectedRoute from './auth/ProtectedRoute';
+import LocalStorageMigration from './auth/LocalStorageMigration';
 import BottomBar from './components/shared/BottomBar';
-import Onboarding from './components/onboarding/Onboarding';
-import Home from './components/home/Home';
-import Profile from './components/home/Profile';
-import NewWorkout from './components/flows/new-workout/NewWorkout';
-import ActiveWorkout from './components/flows/active-workout/ActiveWorkout';
-import BuildProgramme from './components/flows/programme/BuildProgramme';
+
+// Auth screens
+import LoginScreen         from './screens/LoginScreen';
+import RegisterScreen      from './screens/RegisterScreen';
+import VerifyEmailScreen   from './screens/VerifyEmailScreen';
+import ForgotPasswordScreen from './screens/ForgotPasswordScreen';
+import ResetPasswordScreen  from './screens/ResetPasswordScreen';
+import AccountSettingsScreen from './screens/AccountSettingsScreen';
+
+// App screens
+import Onboarding      from './components/onboarding/Onboarding';
+import Home            from './components/home/Home';
+import Profile         from './components/home/Profile';
+import NewWorkout      from './components/flows/new-workout/NewWorkout';
+import ActiveWorkout   from './components/flows/active-workout/ActiveWorkout';
+import BuildProgramme  from './components/flows/programme/BuildProgramme';
 import ContinueProgramme from './components/flows/programme/ContinueProgramme';
-import WorkoutHistory from './components/flows/history/WorkoutHistory';
-import Progress from './components/progress/Progress';
-import Coach from './components/coach/Coach';
-import { storage } from './utils/storage';
+import WorkoutHistory  from './components/flows/history/WorkoutHistory';
+import Progress        from './components/progress/Progress';
+import Coach           from './components/coach/Coach';
 
 const NO_BOTTOM_BAR = ['/workout/active'];
 
@@ -26,39 +38,76 @@ function Layout({ children }) {
   );
 }
 
-export default function App() {
+// App shell: requires auth + profile
+function AppShell() {
+  const { user, profile, isLoading } = useAuth();
   const [hasProfile, setHasProfile] = useState(null);
+  const [showMigration, setShowMigration] = useState(false);
 
   useEffect(() => {
-    const profile = storage.getProfile();
-    setHasProfile(!!profile);
-  }, []);
+    if (!isLoading) {
+      // Profile exists when user has completed onboarding (has age/goal etc.)
+      const profileComplete = !!(profile?.fitness_goal || profile?.extra_data?.name);
+      setHasProfile(profileComplete);
+      // Show migration prompt once per session after login
+      if (!sessionStorage.getItem('migration_checked')) {
+        sessionStorage.setItem('migration_checked', '1');
+        setShowMigration(true);
+      }
+    }
+  }, [isLoading, profile]);
 
-  if (hasProfile === null) return null;
+  if (isLoading || hasProfile === null) return null;
 
   if (!hasProfile) {
     return (
       <div style={{ background: '#0f0f14', minHeight: '100vh' }}>
         <Onboarding onComplete={() => setHasProfile(true)} />
+        {showMigration && <LocalStorageMigration onDone={() => setShowMigration(false)} />}
       </div>
     );
   }
 
   return (
+    <Layout>
+      {showMigration && <LocalStorageMigration onDone={() => setShowMigration(false)} />}
+      <Routes>
+        <Route path="/"                  element={<Home />} />
+        <Route path="/profile"           element={<Profile />} />
+        <Route path="/account"           element={<AccountSettingsScreen />} />
+        <Route path="/new-workout"       element={<NewWorkout />} />
+        <Route path="/workout/active"    element={<ActiveWorkout />} />
+        <Route path="/programme/build"   element={<BuildProgramme />} />
+        <Route path="/programme/continue" element={<ContinueProgramme />} />
+        <Route path="/history"           element={<WorkoutHistory />} />
+        <Route path="/progress"          element={<Progress />} />
+        <Route path="/coach"             element={<Coach />} />
+        <Route path="*"                  element={<Navigate to="/" replace />} />
+      </Routes>
+    </Layout>
+  );
+}
+
+export default function App() {
+  return (
     <BrowserRouter>
-      <Layout>
+      <AuthProvider>
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/new-workout" element={<NewWorkout />} />
-          <Route path="/workout/active" element={<ActiveWorkout />} />
-          <Route path="/programme/build" element={<BuildProgramme />} />
-          <Route path="/programme/continue" element={<ContinueProgramme />} />
-          <Route path="/history" element={<WorkoutHistory />} />
-          <Route path="/progress" element={<Progress />} />
-          <Route path="/coach" element={<Coach />} />
+          {/* Public auth routes */}
+          <Route path="/login"            element={<LoginScreen />} />
+          <Route path="/register"         element={<RegisterScreen />} />
+          <Route path="/verify-email"     element={<VerifyEmailScreen />} />
+          <Route path="/forgot-password"  element={<ForgotPasswordScreen />} />
+          <Route path="/reset-password"   element={<ResetPasswordScreen />} />
+
+          {/* Protected app routes */}
+          <Route path="/*" element={
+            <ProtectedRoute>
+              <AppShell />
+            </ProtectedRoute>
+          } />
         </Routes>
-      </Layout>
+      </AuthProvider>
     </BrowserRouter>
   );
 }
