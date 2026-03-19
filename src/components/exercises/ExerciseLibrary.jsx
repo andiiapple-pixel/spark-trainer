@@ -172,10 +172,13 @@ function FilterRow({ label, options, value, onChange }) {
 function ExerciseCard({ exercise, isFav, onFav, onClick }) {
   const diffColor = { beginner: '#10b981', intermediate: '#f97316', advanced: '#ef4444' };
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onClick(e); }}
       className="w-full text-left p-4 rounded-2xl flex items-center gap-3 btn-press"
-      style={{ background: '#111118', border: '1px solid #1e1e2e' }}
+      style={{ background: '#111118', border: '1px solid #1e1e2e', cursor: 'pointer' }}
     >
       <div className="flex-1 min-w-0">
         <div className="font-semibold text-sm truncate" style={{ color: '#f8fafc' }}>{exercise.name}</div>
@@ -198,6 +201,6 @@ function ExerciseCard({ exercise, isFav, onFav, onClick }) {
       >
         <Star size={16} fill={isFav ? '#f59e0b' : 'none'} />
       </button>
-    </button>
+    </div>
   );
 }

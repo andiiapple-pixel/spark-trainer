@@ -16,9 +16,13 @@ function ExerciseCard({ exercise, index }) {
         animationDelay: `${index * 50}ms`,
       }}
     >
-      <button
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => setExpanded(e => !e)}
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setExpanded(v => !v); }}
         className="w-full px-4 py-4 flex items-start gap-3 text-left"
+        style={{ cursor: 'pointer' }}
       >
         <div
           className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm"
@@ -65,7 +69,7 @@ function ExerciseCard({ exercise, index }) {
         {expanded
           ? <ChevronUp size={16} style={{ color: '#475569', flexShrink: 0, marginTop: 4 }} />
           : <ChevronDown size={16} style={{ color: '#475569', flexShrink: 0, marginTop: 4 }} />}
-      </button>
+      </div>
 
       {expanded && (
         <div className="px-4 pb-4" style={{ borderTop: '1px solid #1e1e2e' }}>
