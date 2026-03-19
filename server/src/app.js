@@ -5,9 +5,11 @@ const helmet = require('helmet');
 const cors = require('cors');
 const { authLimiter } = require('./middleware/rateLimiter');
 
-const authRoutes    = require('./routes/auth');
-const accountRoutes = require('./routes/account');
-const dataRoutes    = require('./routes/data');
+const authRoutes      = require('./routes/auth');
+const accountRoutes   = require('./routes/account');
+const dataRoutes      = require('./routes/data');
+const exerciseRoutes  = require('./routes/exercises');
+const recoveryRoutes  = require('./routes/recovery');
 
 const app = express();
 
@@ -36,9 +38,11 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
-app.use('/api/auth',    authRoutes);
-app.use('/api/account', accountRoutes);
-app.use('/api/data',    dataRoutes);
+app.use('/api/auth',      authRoutes);
+app.use('/api/account',   accountRoutes);
+app.use('/api/data',      dataRoutes);
+app.use('/api/exercises', exerciseRoutes);
+app.use('/api/recovery',  recoveryRoutes);
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => res.json({ ok: true }));

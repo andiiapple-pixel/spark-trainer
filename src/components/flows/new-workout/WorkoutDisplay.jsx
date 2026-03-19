@@ -29,14 +29,17 @@ function ExerciseCard({ exercise, index }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-sm" style={{ color: '#f8fafc' }}>{exercise.name}</span>
-            <button
+            <div
+              role="button"
+              tabIndex={0}
               onClick={e => { e.stopPropagation(); navigate(`/exercises/${slug}`); }}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); navigate(`/exercises/${slug}`); } }}
               className="p-0.5 rounded btn-press"
-              style={{ color: '#475569' }}
+              style={{ color: '#475569', cursor: 'pointer' }}
               title="View exercise guide"
             >
               <BookOpen size={12} />
-            </button>
+            </div>
           </div>
           <div className="flex flex-wrap gap-1 mt-1.5">
             {(exercise.muscle_groups || []).map(mg => (

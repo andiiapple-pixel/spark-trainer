@@ -118,8 +118,13 @@ export default function ActiveWorkout() {
     return () => clearInterval(timerRef.current);
   }, [done, ctx.tickTimer]);
 
+  useEffect(() => {
+    if (!ctx.status || !ctx.workout) {
+      navigate('/');
+    }
+  }, [ctx.status, ctx.workout, navigate]);
+
   if (!ctx.status || !ctx.workout) {
-    navigate('/');
     return null;
   }
 
