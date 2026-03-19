@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Shield, Mail, Key, Monitor, Trash2, Check, X, Eye, EyeOff, BadgeCheck, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Shield, Mail, Key, Monitor, Trash2, Check, X, Eye, EyeOff, BadgeCheck, AlertTriangle, Download } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
-import { account as accountApi, data as dataApi } from '../services/api';
+import { account as accountApi, data as dataApi, getAccessToken } from '../services/api';
 
 export default function AccountSettingsScreen() {
   const navigate = useNavigate();
@@ -25,6 +25,7 @@ export default function AccountSettingsScreen() {
           { id: 'info',     label: 'Profile',  icon: Mail },
           { id: 'password', label: 'Password', icon: Key },
           { id: 'sessions', label: 'Sessions', icon: Monitor },
+          { id: 'data',     label: 'Data',     icon: Download },
           { id: 'danger',   label: 'Danger',   icon: AlertTriangle },
         ].map(({ id, label, icon: Icon }) => (
           <button
@@ -47,6 +48,7 @@ export default function AccountSettingsScreen() {
         {tab === 'info'     && <InfoTab user={user} updateUser={updateUser} />}
         {tab === 'password' && <PasswordTab />}
         {tab === 'sessions' && <SessionsTab />}
+        {tab === 'data'     && <DataTab />}
         {tab === 'danger'   && <DangerTab logout={logout} navigate={navigate} />}
       </div>
     </div>
@@ -383,3 +385,75 @@ const btnDanger = {
   padding: '11px 16px', background: '#1a1a2e', border: '1px solid #ef4444', borderRadius: 10,
   color: '#ef4444', fontSize: 14, fontWeight: 600, cursor: 'pointer',
 };
+
+// ─── Data Tab ─────────────────────────────────────────────────────────────────
+function DataTab() {
+  const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+  const [exporting, setExporting] = useState(false);
+  const [msg, setMsg] = useState('');
+
+  async function exportJson() {
+    setExporting(true);
+    try {
+      const res = await dataApi.exportJson();
+      const blob = new Blob([JSON.stringify(res, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'spark-trainer-export.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      setMsg('JSON export downloaded.');
+    } catch {
+      setMsg('Export failed. Try again.');
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  async function exportCsv() {
+    setExporting(true);
+    try {
+      const res = await fetch(`${BASE}/api/data/export/csv`, {
+        headers: { Authorization: `Bearer ${getAccessToken()}` }
+      });
+      if (!res.ok) throw new Error();
+      const text = await res.text();
+      const blob = new Blob([text], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'spark-trainer-workouts.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+      setMsg('CSV export downloaded.');
+    } catch {
+      setMsg('Export failed. Try again.');
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div>
+        <h2 style={{ color: '#f1f5f9', fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Export My Data</h2>
+        <p style={{ color: '#64748b', fontSize: 13, lineHeight: 1.5, marginBottom: 16 }}>
+          Download all your data. JSON includes everything — workouts, programmes, metrics, PRs. CSV is workouts only.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <button onClick={exportJson} disabled={exporting} style={btnPrimary(exporting)}>
+            <Download size={14} style={{ display: 'inline', marginRight: 6 }} />
+            Export all data (JSON)
+          </button>
+          <button onClick={exportCsv} disabled={exporting}
+            style={{ ...btnPrimary(false), background: '#10b981' }}>
+            <Download size={14} style={{ display: 'inline', marginRight: 6 }} />
+            Export workout history (CSV)
+          </button>
+        </div>
+        {msg && <p style={{ color: '#10b981', fontSize: 13, marginTop: 8 }}>{msg}</p>}
+      </div>
+    </div>
+  );
+}

@@ -42,6 +42,7 @@ router.get('/', async (req, res) => {
       `SELECT COUNT(*) FROM exercises ${where}`, params
     );
 
+    res.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=3600');
     res.json({ exercises: rows, total: parseInt(countRows[0].count), page: parseInt(page) });
   } catch (err) {
     console.error(err);
@@ -68,6 +69,7 @@ router.get('/:slug', async (req, res) => {
   try {
     const { rows } = await pool.query('SELECT * FROM exercises WHERE slug=$1', [req.params.slug]);
     if (!rows.length) return res.status(404).json({ error: 'Exercise not found' });
+    res.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=3600');
     res.json({ exercise: rows[0] });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch exercise' });

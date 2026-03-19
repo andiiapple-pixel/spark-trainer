@@ -414,4 +414,111 @@ router.post('/import', async (req, res) => {
   }
 });
 
+// ─── Data Export ──────────────────────────────────────────────────────────────
+router.get('/export/json', async (req, res) => {
+  try {
+    const uid = req.user.id;
+    const [profile, workouts, programmes, metrics, records, coachChat] = await Promise.all([
+      pool.query('SELECT * FROM user_profiles WHERE user_id=$1', [uid]),
+      pool.query('SELECT * FROM workout_history WHERE user_id=$1 ORDER BY completed_at DESC', [uid]),
+      pool.query('SELECT * FROM programmes WHERE user_id=$1 ORDER BY created_at DESC', [uid]),
+      pool.query('SELECT * FROM health_metrics WHERE user_id=$1 ORDER BY logged_at DESC', [uid]),
+      pool.query('SELECT * FROM personal_records WHERE user_id=$1 ORDER BY exercise_name', [uid]),
+      pool.query('SELECT * FROM coach_chat_history WHERE user_id=$1 ORDER BY created_at', [uid]),
+    ]);
+    const exported = {
+      exported_at: new Date().toISOString(),
+      profile: profile.rows[0] || null,
+      workouts: workouts.rows,
+      programmes: programmes.rows,
+      health_metrics: metrics.rows,
+      personal_records: records.rows,
+      coach_chat: coachChat.rows,
+    };
+    res.setHeader('Content-Disposition', 'attachment; filename="spark-trainer-export.json"');
+    res.setHeader('Content-Type', 'application/json');
+    res.json(exported);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Export failed' });
+  }
+});
+
+router.get('/export/csv', async (req, res) => {
+  try {
+    const uid = req.user.id;
+    const { rows } = await pool.query(
+      'SELECT * FROM workout_history WHERE user_id=$1 ORDER BY completed_at DESC', [uid]
+    );
+    const lines = ['date,workout_type,focus,duration_mins,total_volume_kg,energy_rating,notes'];
+    for (const w of rows) {
+      const d = [
+        w.completed_at ? w.completed_at.toISOString().split('T')[0] : '',
+        w.workout_type || '',
+        w.focus || '',
+        w.duration_mins || '',
+        w.total_volume_kg || '',
+        w.energy_rating || '',
+        (w.user_notes_today || '').replace(/,/g, ';'),
+      ];
+      lines.push(d.join(','));
+    }
+    res.setHeader('Content-Disposition', 'attachment; filename="spark-trainer-workouts.csv"');
+    res.setHeader('Content-Type', 'text/csv');
+    res.send(lines.join('\n'));
+  } catch (err) {
+    res.status(500).json({ error: 'Export failed' });
+  }
+});
+
+// ─── Import from competitor CSV ────────────────────────────────────────────────
+router.post('/import-csv', async (req, res) => {
+  try {
+    const { format, rows: csvRows } = req.body;
+    if (!Array.isArray(csvRows) || !csvRows.length) {
+      return res.status(400).json({ error: 'No rows provided' });
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      let imported = 0;
+
+      for (const row of csvRows) {
+        // Support Strong and Hevy export formats
+        const date = row.Date || row.date || row.start_time || new Date().toISOString();
+        const exerciseName = row['Exercise Name'] || row.exercise_name || row.title || '';
+        const weight = parseFloat(row['Weight'] || row.weight_kg || row.weight || 0) || null;
+        const reps = parseInt(row['Reps'] || row.reps || 0) || null;
+        const sets = parseInt(row['Sets'] || row.sets || 1) || 1;
+
+        if (!exerciseName) continue;
+
+        await client.query(
+          `INSERT INTO workout_history (user_id, completed_at, workout_type, focus, workout_data, user_notes_today)
+           VALUES ($1,$2,'imported','Imported from ${format}', $3, $4)`,
+          [
+            req.user.id,
+            new Date(date),
+            JSON.stringify({ exercises: [{ name: exerciseName, sets: [{ weight_kg: weight, reps }] }] }),
+            `Imported from ${format}`
+          ]
+        );
+        imported++;
+      }
+
+      await client.query('COMMIT');
+      res.json({ message: `Imported ${imported} entries`, count: imported });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Import failed' });
+  }
+});
+
 module.exports = router;

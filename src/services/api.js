@@ -5,7 +5,8 @@
  * is ideal but requires same-origin; localStorage is used here for cross-origin dev).
  */
 
-const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+import { config } from '../config';
+const BASE = config.apiUrl;
 
 // ─── Token store (in-memory for XSS safety) ───────────────────────────────────
 let _accessToken = null;
@@ -143,6 +144,37 @@ export const data = {
 
   // localStorage migration
   importFromStorage:   (payload) => post('/api/data/import', payload),
+
+  // Export
+  exportJson:          () => get('/api/data/export/json'),
+  exportCsv:           () => fetch(`${BASE}/api/data/export/csv`, { headers: { Authorization: `Bearer ${getAccessToken()}` } }),
+  importCsv:           (payload) => post('/api/data/import-csv', payload),
+};
+
+// ─── Exercises ────────────────────────────────────────────────────────────────
+export const exercises = {
+  list:           (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return get(`/api/exercises${qs ? `?${qs}` : ''}`);
+  },
+  search:         (q) => get(`/api/exercises/search?q=${encodeURIComponent(q)}`),
+  get:            (slug) => get(`/api/exercises/${slug}`),
+  favourite:      (id) => post(`/api/exercises/${id}/favourite`, {}),
+  unfavourite:    (id) => del(`/api/exercises/${id}/favourite`),
+  getFavourites:  () => get('/api/exercises/user/favourites'),
+};
+
+// ─── Recovery ─────────────────────────────────────────────────────────────────
+export const recovery = {
+  getLogs:                () => get('/api/recovery'),
+  getToday:               () => get('/api/recovery/today'),
+  logCheckin:             (d) => post('/api/recovery', d),
+  getEquipmentProfiles:   () => get('/api/recovery/equipment-profiles'),
+  createEquipmentProfile: (d) => post('/api/recovery/equipment-profiles', d),
+  updateEquipmentProfile: (id, d) => put(`/api/recovery/equipment-profiles/${id}`, d),
+  deleteEquipmentProfile: (id) => del(`/api/recovery/equipment-profiles/${id}`),
+  getAchievements:        () => get('/api/recovery/achievements'),
+  unlockAchievement:      (a) => post('/api/recovery/achievements', { achievement: a }),
 };
 
 // ─── Bootstrap: restore session on app load ───────────────────────────────────

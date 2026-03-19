@@ -1,9 +1,9 @@
 require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 
-const express = require('express');
-const helmet = require('helmet');
-const cors = require('cors');
-const { authLimiter } = require('./middleware/rateLimiter');
+const express    = require('express');
+const helmet     = require('helmet');
+const cors       = require('cors');
+const compression = require('compression');
 
 const authRoutes      = require('./routes/auth');
 const accountRoutes   = require('./routes/account');
@@ -15,6 +15,9 @@ const app = express();
 
 // ─── Security Headers ─────────────────────────────────────────────────────────
 app.use(helmet());
+
+// ─── Compression ──────────────────────────────────────────────────────────────
+app.use(compression());
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 app.use(cors({
