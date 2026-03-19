@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, LogOut } from 'lucide-react';
+import { Check, LogOut, Plus, Trash2 } from 'lucide-react';
 import ScreenHeader from '../shared/ScreenHeader';
 import { storage } from '../../utils/storage';
-import { data as dataApi } from '../../services/api';
+import { data as dataApi, recovery as recoveryApi } from '../../services/api';
 import { useAuth } from '../../auth/AuthContext';
 
 // Safely coerce the DB injuries value (TEXT column) to a JS array.
@@ -97,6 +97,159 @@ const EQUIPMENT_OPTIONS = [
   { id: 'dumbbells',  emoji: '🏋️', label: 'Dumbbells only',    sub: 'Dumbbell set at home' },
 ];
 
+const GYM_EQUIPMENT_LIST = [
+  'Barbell', 'Squat rack', 'Bench', 'Dumbbells', 'Cables', 'Pull-up bar',
+  'Resistance bands', 'Kettlebells', 'Machines', 'Leg press', 'Smith machine',
+  'Rowing machine', 'Treadmill', 'Bike', 'Trap bar',
+];
+
+function GymProfiles() {
+  const [profiles, setProfiles] = useState([]);
+  const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newEquipment, setNewEquipment] = useState([]);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    recoveryApi.getEquipmentProfiles()
+      .then(r => setProfiles(r.profiles || []))
+      .catch(() => {});
+  }, []);
+
+  async function createProfile() {
+    if (!newName.trim()) return;
+    setSaving(true);
+    try {
+      const r = await recoveryApi.createEquipmentProfile({ name: newName.trim(), equipment_list: newEquipment });
+      setProfiles(prev => [...prev, r.profile]);
+      setCreating(false);
+      setNewName('');
+      setNewEquipment([]);
+    } catch { /* ignore */ }
+    setSaving(false);
+  }
+
+  async function deleteProfile(id) {
+    try {
+      await recoveryApi.deleteEquipmentProfile(id);
+      setProfiles(prev => prev.filter(p => p.id !== id));
+    } catch { /* ignore */ }
+  }
+
+  async function setDefault(id) {
+    try {
+      const r = await recoveryApi.updateEquipmentProfile(id, { is_default: true });
+      setProfiles(prev => prev.map(p => ({
+        ...p,
+        is_default: p.id === id ? true : false,
+      })));
+    } catch { /* ignore */ }
+  }
+
+  function toggleEquip(item) {
+    setNewEquipment(prev =>
+      prev.includes(item) ? prev.filter(e => e !== item) : [...prev, item]
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <label className="text-xs font-medium" style={{ color: '#94a3b8' }}>GYM PROFILES</label>
+        <button
+          onClick={() => setCreating(c => !c)}
+          className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg btn-press"
+          style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8' }}
+        >
+          <Plus size={12} /> New
+        </button>
+      </div>
+
+      {profiles.length === 0 && !creating && (
+        <p className="text-xs py-3 text-center" style={{ color: '#475569' }}>
+          No gym profiles yet. Create one to save your equipment setup.
+        </p>
+      )}
+
+      {profiles.map(p => (
+        <div
+          key={p.id}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-2xl mb-2"
+          style={{ background: '#111118', border: `1px solid ${p.is_default ? '#6366f160' : '#2d2d3d'}` }}
+        >
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-medium truncate" style={{ color: '#f8fafc' }}>{p.name}</div>
+            <div className="text-xs truncate" style={{ color: '#475569' }}>
+              {(p.equipment_list || []).slice(0, 4).join(', ')}{(p.equipment_list?.length || 0) > 4 ? ` +${p.equipment_list.length - 4}` : ''}
+            </div>
+          </div>
+          {!p.is_default && (
+            <button
+              onClick={() => setDefault(p.id)}
+              className="text-xs px-2 py-1 rounded-lg"
+              style={{ background: '#2d2d3d', color: '#475569' }}
+            >
+              Set default
+            </button>
+          )}
+          {p.is_default && (
+            <span className="text-xs px-2 py-1 rounded-lg" style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8' }}>Default</span>
+          )}
+          <button onClick={() => deleteProfile(p.id)} style={{ color: '#ef444480' }}>
+            <Trash2 size={14} />
+          </button>
+        </div>
+      ))}
+
+      {creating && (
+        <div className="flex flex-col gap-3 p-3 rounded-2xl animate-fade-in" style={{ background: '#111118', border: '1px solid #2d2d3d' }}>
+          <input
+            autoFocus
+            placeholder="Profile name (e.g. Main Gym)"
+            value={newName}
+            onChange={e => setNewName(e.target.value)}
+            className="w-full px-3 py-2.5 rounded-lg text-sm outline-none"
+            style={{ background: '#0f0f14', border: '1px solid #2d2d3d', color: '#f8fafc' }}
+          />
+          <div className="flex flex-wrap gap-1.5">
+            {GYM_EQUIPMENT_LIST.map(item => (
+              <button
+                key={item}
+                onClick={() => toggleEquip(item)}
+                className="px-2.5 py-1 rounded-lg text-xs btn-press"
+                style={{
+                  background: newEquipment.includes(item) ? 'rgba(99,102,241,0.12)' : '#2d2d3d',
+                  color: newEquipment.includes(item) ? '#818cf8' : '#475569',
+                  border: `1px solid ${newEquipment.includes(item) ? '#6366f160' : 'transparent'}`,
+                }}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={createProfile}
+              disabled={saving || !newName.trim()}
+              className="flex-1 py-2 rounded-lg text-sm font-semibold btn-press"
+              style={{ background: '#6366f1', color: '#fff', opacity: saving ? 0.7 : 1 }}
+            >
+              {saving ? 'Saving…' : 'Save Profile'}
+            </button>
+            <button
+              onClick={() => { setCreating(false); setNewName(''); setNewEquipment([]); }}
+              className="px-4 py-2 rounded-lg text-sm btn-press"
+              style={{ background: '#2d2d3d', color: '#475569' }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Profile() {
   const navigate = useNavigate();
   const { updateProfile } = useAuth();
@@ -160,17 +313,17 @@ export default function Profile() {
       <div className="flex flex-col min-h-screen max-w-[430px] mx-auto pb-8">
         <ScreenHeader title="My Profile" />
         <div className="px-4 pt-8 flex justify-center">
-          <p style={{ color: '#64748b', fontSize: 14 }}>Loading profile…</p>
+          <p style={{ color: '#475569', fontSize: 14 }}>Loading profile…</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-screen max-w-[430px] mx-auto pb-8">
+    <div className="flex flex-col min-h-screen max-w-[430px] mx-auto pb-8" style={{ background: '#0a0a0f' }}>
       <ScreenHeader title="My Profile" />
 
-      <div className="px-4 flex flex-col gap-4">
+      <div className="px-5 flex flex-col gap-4">
         {/* Basic info */}
         <div className="flex flex-col gap-3">
           {fields.map(f => (
@@ -180,8 +333,8 @@ export default function Profile() {
                 type={f.type}
                 value={profile[f.field] || ''}
                 onChange={e => update(f.field, e.target.value)}
-                className="w-full px-4 py-3 rounded-xl outline-none text-sm"
-                style={{ background: '#1e1e2a', border: '1px solid #2a2a3a', color: '#f1f5f9' }}
+                className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
+                style={{ background: '#111118', border: '1px solid #2d2d3d', color: '#f8fafc' }}
               />
             </div>
           ))}
@@ -195,10 +348,10 @@ export default function Profile() {
               <button
                 key={s}
                 onClick={() => update('sex', s)}
-                className="flex-1 py-2.5 rounded-xl text-sm font-medium btn-press"
+                className="flex-1 py-2.5 rounded-2xl text-sm font-medium btn-press"
                 style={{
-                  background: profile.sex === s ? '#3b82f6' : '#1e1e2a',
-                  border: `1px solid ${profile.sex === s ? '#3b82f6' : '#2a2a3a'}`,
+                  background: profile.sex === s ? '#6366f1' : '#111118',
+                  border: `1px solid ${profile.sex === s ? '#6366f1' : '#2d2d3d'}`,
                   color: profile.sex === s ? '#fff' : '#94a3b8',
                 }}
               >
@@ -216,15 +369,15 @@ export default function Profile() {
               <button
                 key={g.id}
                 onClick={() => update('goal', g.id)}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl text-left btn-press"
+                className="flex items-center gap-3 px-4 py-3 rounded-2xl text-left btn-press"
                 style={{
-                  background: profile.goal === g.id ? '#1e3a5f' : '#1e1e2a',
-                  border: `1px solid ${profile.goal === g.id ? '#3b82f6' : '#2a2a3a'}`,
+                  background: profile.goal === g.id ? 'rgba(99,102,241,0.12)' : '#111118',
+                  border: `1px solid ${profile.goal === g.id ? '#6366f1' : '#2d2d3d'}`,
                 }}
               >
                 <span>{g.emoji}</span>
-                <span className="text-sm font-medium" style={{ color: '#f1f5f9' }}>{g.label}</span>
-                {profile.goal === g.id && <Check size={15} className="ml-auto" style={{ color: '#3b82f6', flexShrink: 0 }} />}
+                <span className="text-sm font-medium" style={{ color: '#f8fafc' }}>{g.label}</span>
+                {profile.goal === g.id && <Check size={15} className="ml-auto" style={{ color: '#6366f1', flexShrink: 0 }} />}
               </button>
             ))}
           </div>
@@ -238,17 +391,17 @@ export default function Profile() {
               <button
                 key={e.id}
                 onClick={() => update('experience', e.id)}
-                className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-left btn-press"
+                className="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left btn-press"
                 style={{
-                  background: profile.experience === e.id ? '#1e3a5f' : '#1e1e2a',
-                  border: `1px solid ${profile.experience === e.id ? '#3b82f6' : '#2a2a3a'}`,
+                  background: profile.experience === e.id ? 'rgba(99,102,241,0.12)' : '#111118',
+                  border: `1px solid ${profile.experience === e.id ? '#6366f1' : '#2d2d3d'}`,
                 }}
               >
                 <div className="flex-1">
-                  <div className="text-sm font-medium" style={{ color: '#f1f5f9' }}>{e.label}</div>
-                  <div className="text-xs" style={{ color: '#64748b' }}>{e.sub}</div>
+                  <div className="text-sm font-medium" style={{ color: '#f8fafc' }}>{e.label}</div>
+                  <div className="text-xs" style={{ color: '#475569' }}>{e.sub}</div>
                 </div>
-                {profile.experience === e.id && <Check size={15} style={{ color: '#3b82f6', flexShrink: 0 }} />}
+                {profile.experience === e.id && <Check size={15} style={{ color: '#6366f1', flexShrink: 0 }} />}
               </button>
             ))}
           </div>
@@ -262,22 +415,25 @@ export default function Profile() {
               <button
                 key={e.id}
                 onClick={() => update('equipment', e.id)}
-                className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-left btn-press"
+                className="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left btn-press"
                 style={{
-                  background: profile.equipment === e.id ? '#1e3a5f' : '#1e1e2a',
-                  border: `1px solid ${profile.equipment === e.id ? '#3b82f6' : '#2a2a3a'}`,
+                  background: profile.equipment === e.id ? 'rgba(99,102,241,0.12)' : '#111118',
+                  border: `1px solid ${profile.equipment === e.id ? '#6366f1' : '#2d2d3d'}`,
                 }}
               >
                 <span className="text-lg">{e.emoji}</span>
                 <div className="flex-1">
-                  <div className="text-sm font-medium" style={{ color: '#f1f5f9' }}>{e.label}</div>
-                  <div className="text-xs" style={{ color: '#64748b' }}>{e.sub}</div>
+                  <div className="text-sm font-medium" style={{ color: '#f8fafc' }}>{e.label}</div>
+                  <div className="text-xs" style={{ color: '#475569' }}>{e.sub}</div>
                 </div>
-                {profile.equipment === e.id && <Check size={15} style={{ color: '#3b82f6', flexShrink: 0 }} />}
+                {profile.equipment === e.id && <Check size={15} style={{ color: '#6366f1', flexShrink: 0 }} />}
               </button>
             ))}
           </div>
         </div>
+
+        {/* Gym Profiles */}
+        <GymProfiles />
 
         {/* Training days */}
         <div>
@@ -287,10 +443,10 @@ export default function Profile() {
               <button
                 key={d}
                 onClick={() => update('daysPerWeek', d)}
-                className="flex-1 py-3 rounded-xl font-bold text-base btn-press"
+                className="flex-1 py-3 rounded-2xl font-bold text-base btn-press"
                 style={{
-                  background: profile.daysPerWeek === d ? '#3b82f6' : '#1e1e2a',
-                  border: `1px solid ${profile.daysPerWeek === d ? '#3b82f6' : '#2a2a3a'}`,
+                  background: profile.daysPerWeek === d ? '#6366f1' : '#111118',
+                  border: `1px solid ${profile.daysPerWeek === d ? '#6366f1' : '#2d2d3d'}`,
                   color: profile.daysPerWeek === d ? '#fff' : '#94a3b8',
                 }}
               >
@@ -308,10 +464,10 @@ export default function Profile() {
               <button
                 key={mins}
                 onClick={() => update('sessionLength', mins)}
-                className="py-3 rounded-xl font-medium text-xs btn-press"
+                className="py-3 rounded-2xl font-medium text-xs btn-press"
                 style={{
-                  background: profile.sessionLength === mins ? '#3b82f6' : '#1e1e2a',
-                  border: `1px solid ${profile.sessionLength === mins ? '#3b82f6' : '#2a2a3a'}`,
+                  background: profile.sessionLength === mins ? '#6366f1' : '#111118',
+                  border: `1px solid ${profile.sessionLength === mins ? '#6366f1' : '#2d2d3d'}`,
                   color: profile.sessionLength === mins ? '#fff' : '#94a3b8',
                 }}
               >
@@ -333,7 +489,7 @@ export default function Profile() {
               ))}
             </div>
             {profile.injuryNotes && (
-              <p className="text-xs mt-2 italic" style={{ color: '#64748b' }}>{profile.injuryNotes}</p>
+              <p className="text-xs mt-2 italic" style={{ color: '#475569' }}>{profile.injuryNotes}</p>
             )}
           </div>
         )}
@@ -348,18 +504,18 @@ export default function Profile() {
         <button
           onClick={save}
           disabled={saving}
-          className="w-full py-3.5 rounded-xl font-semibold btn-press flex items-center justify-center gap-2"
-          style={{ background: saveMsg?.type === 'success' ? '#10b981' : '#3b82f6', color: '#fff', opacity: saving ? 0.7 : 1 }}
+          className="w-full py-3.5 rounded-2xl font-semibold btn-press flex items-center justify-center gap-2"
+          style={{ background: saveMsg?.type === 'success' ? '#10b981' : '#6366f1', color: '#fff', opacity: saving ? 0.7 : 1 }}
         >
           {saving ? 'Saving…' : saveMsg?.type === 'success' ? <><Check size={18} /> Saved!</> : 'Save Changes'}
         </button>
 
         {/* Danger zone */}
-        <div className="mt-2 pt-4" style={{ borderTop: '1px solid #2a2a3a' }}>
+        <div className="mt-2 pt-4" style={{ borderTop: '1px solid #1e1e2e' }}>
           <button
             onClick={resetApp}
-            className="w-full py-3 rounded-xl text-sm font-medium btn-press flex items-center justify-center gap-2"
-            style={{ background: '#1a1a24', border: '1px solid #ef444430', color: '#ef4444' }}
+            className="w-full py-3 rounded-2xl text-sm font-medium btn-press flex items-center justify-center gap-2"
+            style={{ background: '#111118', border: '1px solid #ef444430', color: '#ef4444' }}
           >
             <LogOut size={16} />
             Reset all data

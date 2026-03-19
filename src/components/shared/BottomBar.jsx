@@ -14,8 +14,13 @@ export default function BottomBar() {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center">
       <div
-        className="w-full max-w-[430px] border-t"
-        style={{ background: '#0f0f14', borderColor: '#2a2a3a' }}
+        className="w-full max-w-[430px]"
+        style={{
+          background: 'rgba(10,10,15,0.92)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderTop: '1px solid #1e1e2e',
+        }}
       >
         <div className="flex">
           {tabs.map(({ path, icon: Icon, label }) => {
@@ -24,11 +29,30 @@ export default function BottomBar() {
               <button
                 key={path}
                 onClick={() => navigate(path)}
-                className="flex-1 flex flex-col items-center gap-1 py-3 btn-press transition-colors"
-                style={{ color: active ? '#3b82f6' : '#64748b' }}
+                className="flex-1 flex flex-col items-center gap-1 py-3 btn-press relative"
+                style={{ minHeight: 56 }}
               >
-                <Icon size={22} />
-                <span className="text-xs font-medium">{label}</span>
+                {active && (
+                  <div
+                    className="absolute top-0 left-1/2 -translate-x-1/2 rounded-full"
+                    style={{ width: 20, height: 2, background: '#6366f1' }}
+                  />
+                )}
+                <Icon
+                  size={22}
+                  strokeWidth={active ? 2 : 1.5}
+                  style={{ color: active ? '#818cf8' : '#475569' }}
+                />
+                <span
+                  className="font-medium"
+                  style={{
+                    fontSize: 10,
+                    letterSpacing: '0.04em',
+                    color: active ? '#818cf8' : '#475569',
+                  }}
+                >
+                  {label}
+                </span>
               </button>
             );
           })}
