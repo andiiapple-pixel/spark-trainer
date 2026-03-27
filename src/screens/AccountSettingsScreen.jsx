@@ -9,37 +9,71 @@ export default function AccountSettingsScreen() {
   const { user, logout, updateUser } = useAuth();
   const [tab, setTab] = useState('info'); // info | password | sessions | danger
 
+  const tabs = [
+    { id: 'info',     label: 'Profile' },
+    { id: 'password', label: 'Password' },
+    { id: 'sessions', label: 'Sessions' },
+    { id: 'data',     label: 'Data' },
+    { id: 'danger',   label: 'Danger' },
+  ];
+
   return (
-    <div style={{ background: '#0f0f14', minHeight: '100vh', maxWidth: 430, margin: '0 auto' }}>
+    <div style={{ background: '#0A0A0A', minHeight: '100vh', maxWidth: 430, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ padding: '52px 20px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
-        <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 4 }}>
-          <ArrowLeft size={22} />
+        <button
+          onClick={() => navigate(-1)}
+          className="btn-press"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 40,
+            height: 40,
+            background: 'transparent',
+            border: '1px solid #222222',
+            borderRadius: 0,
+            cursor: 'pointer',
+            color: '#888888',
+            flexShrink: 0,
+          }}
+        >
+          <ArrowLeft size={18} />
         </button>
-        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#f1f5f9' }}>Account Settings</h1>
+        <h1 style={{
+          margin: 0,
+          fontFamily: "'Oswald', sans-serif",
+          fontSize: 24,
+          fontWeight: 700,
+          color: '#FFFFFF',
+          textTransform: 'uppercase',
+          letterSpacing: '0.02em',
+        }}>
+          ACCOUNT
+        </h1>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', padding: '0 20px', gap: 4, marginBottom: 8, overflowX: 'auto' }}>
-        {[
-          { id: 'info',     label: 'Profile',  icon: Mail },
-          { id: 'password', label: 'Password', icon: Key },
-          { id: 'sessions', label: 'Sessions', icon: Monitor },
-          { id: 'data',     label: 'Data',     icon: Download },
-          { id: 'danger',   label: 'Danger',   icon: AlertTriangle },
-        ].map(({ id, label, icon: Icon }) => (
+      <div style={{ display: 'flex', padding: '0 20px', gap: 0, marginBottom: 16, overflowX: 'auto' }}>
+        {tabs.map(({ id, label }) => (
           <button
             key={id}
             onClick={() => setTab(id)}
             style={{
-              display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px',
-              background: tab === id ? '#1e1e2a' : 'transparent',
-              border: tab === id ? '1px solid #2a2a3a' : '1px solid transparent',
-              borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap',
-              color: tab === id ? '#f1f5f9' : '#64748b', fontSize: 13, fontWeight: 600,
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 13,
+              fontWeight: tab === id ? 500 : 400,
+              padding: '10px 16px',
+              background: 'transparent',
+              border: 'none',
+              borderBottom: tab === id ? '2px solid #E8FF00' : '2px solid transparent',
+              borderRadius: 0,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              color: tab === id ? '#FFFFFF' : '#555555',
             }}
           >
-            <Icon size={14} /> {label}
+            {label}
           </button>
         ))}
       </div>
@@ -98,38 +132,38 @@ function InfoTab({ user, updateUser }) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Name */}
-      <Card title="Display name">
+      <Card title="DISPLAY NAME">
         <form onSubmit={saveName}>
           <input value={name} onChange={e => setName(e.target.value)} style={inputStyle} placeholder="Your name" />
-          {error && <p style={{ color: '#ef4444', fontSize: 13, margin: '6px 0' }}>{error}</p>}
+          {error && <p style={{ fontFamily: "'Inter', sans-serif", color: '#EF4444', fontSize: 13, margin: '8px 0' }}>{error}</p>}
           <button type="submit" disabled={loading} style={btnPrimary(loading)}>
-            {saved ? <><Check size={14} style={{ verticalAlign: 'middle' }} /> Saved</> : loading ? 'Saving…' : 'Save name'}
+            {saved ? <><Check size={14} style={{ verticalAlign: 'middle' }} /> SAVED</> : loading ? 'SAVING...' : 'SAVE NAME'}
           </button>
         </form>
       </Card>
 
       {/* Email */}
-      <Card title="Email address">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, padding: '10px 12px', background: '#0f0f14', borderRadius: 8 }}>
-          <span style={{ flex: 1, fontSize: 14, color: '#f1f5f9' }}>{user?.email}</span>
+      <Card title="EMAIL ADDRESS">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, padding: '12px 16px', background: '#0A0A0A', border: '1px solid #222222', borderRadius: 0 }}>
+          <span style={{ flex: 1, fontFamily: "'Inter', sans-serif", fontSize: 14, color: '#FFFFFF' }}>{user?.email}</span>
           {user?.email_verified
-            ? <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#10b981', fontWeight: 600 }}><BadgeCheck size={14} /> Verified</span>
-            : <span style={{ fontSize: 12, color: '#f97316', fontWeight: 600 }}>Unverified</span>}
+            ? <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: "'Inter', sans-serif", fontSize: 11, color: '#10b981', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px' }}><BadgeCheck size={14} /> Verified</span>
+            : <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: '#EF4444', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px' }}>Unverified</span>}
         </div>
 
-        <p style={{ fontSize: 13, color: '#64748b', marginBottom: 12 }}>Change your email address (requires password + verification):</p>
+        <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#555555', marginBottom: 12 }}>Change your email address (requires password + verification):</p>
         <form onSubmit={changeEmail}>
           <input type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="New email address" style={{ ...inputStyle, marginBottom: 8 }} required />
           <input type="password" value={emailPw} onChange={e => setEmailPw(e.target.value)} placeholder="Confirm with your password" style={{ ...inputStyle, marginBottom: 10 }} required />
           {emailMsg && (
-            <p style={{ fontSize: 13, color: emailMsg.type === 'success' ? '#10b981' : '#ef4444', marginBottom: 10 }}>
+            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: emailMsg.type === 'success' ? '#10b981' : '#EF4444', marginBottom: 10 }}>
               {emailMsg.text}
             </p>
           )}
           <button type="submit" disabled={emailLoading} style={btnPrimary(emailLoading)}>
-            {emailLoading ? 'Sending…' : 'Change email'}
+            {emailLoading ? 'SENDING...' : 'CHANGE EMAIL'}
           </button>
         </form>
       </Card>
@@ -151,7 +185,7 @@ function PasswordTab() {
     return s;
   }
   const s = getStrength(form.next);
-  const colors = ['#2a2a3a','#ef4444','#f97316','#eab308','#10b981'];
+  const colors = ['#222222','#EF4444','#f97316','#E8FF00','#10b981'];
   const labels = ['','Weak','Fair','Good','Strong'];
 
   async function handleSubmit(e) {
@@ -171,47 +205,47 @@ function PasswordTab() {
   }
 
   return (
-    <Card title="Change password">
+    <Card title="CHANGE PASSWORD">
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 14 }}>
-          <label style={labelStyle}>Current password</label>
+        <div style={{ marginBottom: 16 }}>
+          <label style={labelStyle}>CURRENT PASSWORD</label>
           <div style={{ position: 'relative' }}>
             <input type={showPw ? 'text' : 'password'} value={form.current} onChange={e => set('current', e.target.value)}
-              required style={{ ...inputStyle, paddingRight: 40 }} placeholder="••••••••" />
+              required style={{ ...inputStyle, paddingRight: 40 }} placeholder="--------" />
             <button type="button" onClick={() => setShow(s => !s)} style={eyeBtn}>
-              {showPw ? <EyeOff size={16} color="#64748b" /> : <Eye size={16} color="#64748b" />}
+              {showPw ? <EyeOff size={16} color="#555555" /> : <Eye size={16} color="#555555" />}
             </button>
           </div>
         </div>
 
-        <div style={{ marginBottom: 6 }}>
-          <label style={labelStyle}>New password</label>
+        <div style={{ marginBottom: 8 }}>
+          <label style={labelStyle}>NEW PASSWORD</label>
           <input type="password" value={form.next} onChange={e => set('next', e.target.value)}
-            required style={inputStyle} placeholder="••••••••" autoComplete="new-password" />
+            required style={inputStyle} placeholder="--------" autoComplete="new-password" />
         </div>
 
         {form.next && (
-          <div style={{ display: 'flex', gap: 3, marginBottom: 10 }}>
+          <div style={{ display: 'flex', gap: 3, marginBottom: 12, alignItems: 'center' }}>
             {[1,2,3,4].map(i => (
-              <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i <= s ? colors[s] : '#2a2a3a' }} />
+              <div key={i} style={{ flex: 1, height: 2, background: i <= s ? colors[s] : '#222222' }} />
             ))}
-            <span style={{ fontSize: 11, color: colors[s], marginLeft: 6, fontWeight: 600 }}>{labels[s]}</span>
+            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: colors[s], marginLeft: 8, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px' }}>{labels[s]}</span>
           </div>
         )}
 
         <div style={{ marginBottom: 20 }}>
-          <label style={labelStyle}>Confirm new password</label>
+          <label style={labelStyle}>CONFIRM NEW PASSWORD</label>
           <input type="password" value={form.confirm} onChange={e => set('confirm', e.target.value)}
-            required style={inputStyle} placeholder="••••••••" />
+            required style={inputStyle} placeholder="--------" />
         </div>
 
         {status && (
-          <p style={{ fontSize: 13, color: status.type === 'success' ? '#10b981' : '#ef4444', marginBottom: 12 }}>
+          <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: status.type === 'success' ? '#10b981' : '#EF4444', marginBottom: 12 }}>
             {status.msg}
           </p>
         )}
         <button type="submit" disabled={loading} style={btnPrimary(loading)}>
-          {loading ? 'Saving…' : 'Change password'}
+          {loading ? 'SAVING...' : 'CHANGE PASSWORD'}
         </button>
       </form>
     </Card>
@@ -254,38 +288,68 @@ function SessionsTab() {
     } catch {}
   }
 
-  if (loading) return <p style={{ color: '#64748b', fontSize: 14 }}>Loading sessions…</p>;
+  if (loading) return <p style={{ fontFamily: "'Inter', sans-serif", color: '#555555', fontSize: 14 }}>Loading sessions...</p>;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {sessions.length > 1 && (
-        <button onClick={revokeAll} style={{ ...btnDanger, alignSelf: 'flex-end', fontSize: 13, padding: '8px 14px' }}>
+        <button
+          onClick={revokeAll}
+          style={{
+            alignSelf: 'flex-end',
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 11,
+            fontWeight: 500,
+            textTransform: 'uppercase',
+            letterSpacing: '1px',
+            padding: '10px 16px',
+            background: 'transparent',
+            border: '1px solid #EF4444',
+            borderRadius: 0,
+            color: '#EF4444',
+            cursor: 'pointer',
+            marginBottom: 8,
+          }}
+        >
           Log out all devices
         </button>
       )}
 
       {sessions.length === 0 && (
-        <p style={{ color: '#64748b', fontSize: 14, textAlign: 'center', padding: 24 }}>No active sessions found.</p>
+        <p style={{ fontFamily: "'Inter', sans-serif", color: '#555555', fontSize: 14, textAlign: 'center', padding: 24 }}>No active sessions found.</p>
       )}
 
       {sessions.map(s => (
-        <div key={s.id} style={{ background: '#1e1e2a', border: '1px solid #2a2a3a', borderRadius: 12, padding: '14px 16px' }}>
+        <div key={s.id} style={{ background: 'transparent', border: '1px solid #222222', borderRadius: 0, padding: '14px 16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
             <div>
-              <p style={{ margin: '0 0 4px', fontSize: 14, fontWeight: 600, color: '#f1f5f9' }}>
+              <p style={{ margin: '0 0 4px', fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 500, color: '#FFFFFF' }}>
                 {s.device_label || 'Unknown device'}
               </p>
-              <p style={{ margin: '0 0 2px', fontSize: 12, color: '#64748b' }}>IP: {s.ip_address || 'Unknown'}</p>
-              <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>
+              <p style={{ margin: '0 0 2px', fontFamily: "'Inter', sans-serif", fontSize: 12, color: '#555555' }}>IP: {s.ip_address || 'Unknown'}</p>
+              <p style={{ margin: 0, fontFamily: "'Inter', sans-serif", fontSize: 12, color: '#555555' }}>
                 Last active: {s.last_used_at ? new Date(s.last_used_at).toLocaleString() : 'Unknown'}
               </p>
             </div>
             <button
               onClick={() => revoke(s.id)}
               disabled={revoking === s.id}
-              style={{ background: 'none', border: '1px solid #2a2a3a', borderRadius: 8, padding: '6px 12px', color: '#ef4444', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
+              style={{
+                background: 'transparent',
+                border: '1px solid #222222',
+                borderRadius: 0,
+                padding: '6px 12px',
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 11,
+                fontWeight: 500,
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+                color: '#EF4444',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
             >
-              {revoking === s.id ? '…' : 'Revoke'}
+              {revoking === s.id ? '...' : 'Revoke'}
             </button>
           </div>
         </div>
@@ -317,37 +381,102 @@ function DangerTab({ logout, navigate }) {
 
   return (
     <>
-      <Card title="Danger zone">
-        <p style={{ fontSize: 14, color: '#94a3b8', marginBottom: 16, lineHeight: 1.6 }}>
+      <div style={{ border: '1px solid #EF4444', borderRadius: 0, padding: '20px 18px' }}>
+        <h2 style={{
+          margin: '0 0 16px',
+          fontFamily: "'Oswald', sans-serif",
+          fontSize: 16,
+          fontWeight: 700,
+          color: '#EF4444',
+          textTransform: 'uppercase',
+          letterSpacing: '0.02em',
+        }}>DANGER ZONE</h2>
+        <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, color: '#888888', marginBottom: 16, lineHeight: 1.6 }}>
           Deleting your account is permanent. All your workouts, progress, programmes, and chat history will be irreversibly removed.
         </p>
-        <button onClick={() => setShowModal(true)} style={btnDanger}>
-          <Trash2 size={15} style={{ verticalAlign: 'middle', marginRight: 6 }} />
+        <button
+          onClick={() => setShowModal(true)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            width: '100%',
+            height: 48,
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 13,
+            fontWeight: 500,
+            background: 'transparent',
+            border: '1px solid #EF4444',
+            borderRadius: 0,
+            color: '#EF4444',
+            cursor: 'pointer',
+          }}
+        >
+          <Trash2 size={15} />
           Delete my account
         </button>
-      </Card>
+      </div>
 
       {showModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, zIndex: 100 }}>
-          <div style={{ background: '#1e1e2a', border: '1px solid #2a2a3a', borderRadius: 16, padding: 28, width: '100%', maxWidth: 380 }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(10,10,10,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, zIndex: 100 }}>
+          <div style={{ background: '#111111', border: '1px solid #222222', borderRadius: 0, padding: 28, width: '100%', maxWidth: 380 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-              <AlertTriangle size={22} color="#ef4444" />
-              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#f1f5f9' }}>Delete account?</h2>
+              <AlertTriangle size={22} color="#EF4444" />
+              <h2 style={{
+                margin: 0,
+                fontFamily: "'Oswald', sans-serif",
+                fontSize: 20,
+                fontWeight: 700,
+                color: '#FFFFFF',
+                textTransform: 'uppercase',
+                letterSpacing: '0.02em',
+              }}>DELETE ACCOUNT?</h2>
             </div>
-            <p style={{ fontSize: 14, color: '#94a3b8', marginBottom: 20, lineHeight: 1.6 }}>
-              This action is <strong style={{ color: '#ef4444' }}>irreversible</strong>. All your data will be permanently deleted.
+            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, color: '#888888', marginBottom: 20, lineHeight: 1.6 }}>
+              This action is <strong style={{ color: '#EF4444' }}>irreversible</strong>. All your data will be permanently deleted.
               Enter your password to confirm.
             </p>
             <input type="password" value={password} onChange={e => setPassword(e.target.value)}
               placeholder="Your password" style={{ ...inputStyle, marginBottom: 12 }} />
-            {error && <p style={{ fontSize: 13, color: '#ef4444', marginBottom: 12 }}>{error}</p>}
+            {error && <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#EF4444', marginBottom: 12 }}>{error}</p>}
             <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={() => setShowModal(false)} style={{ flex: 1, padding: 12, background: '#0f0f14', border: '1px solid #2a2a3a', borderRadius: 10, color: '#94a3b8', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+              <button
+                onClick={() => setShowModal(false)}
+                style={{
+                  flex: 1,
+                  height: 48,
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: 14,
+                  fontWeight: 500,
+                  background: 'transparent',
+                  border: '1px solid #222222',
+                  borderRadius: 0,
+                  color: '#888888',
+                  cursor: 'pointer',
+                }}
+              >
                 Cancel
               </button>
-              <button onClick={deleteAccount} disabled={loading || !password}
-                style={{ flex: 1, padding: 12, background: '#ef4444', border: 'none', borderRadius: 10, color: '#fff', fontSize: 14, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}>
-                {loading ? 'Deleting…' : 'Delete account'}
+              <button
+                onClick={deleteAccount}
+                disabled={loading || !password}
+                style={{
+                  flex: 1,
+                  height: 48,
+                  fontFamily: "'Oswald', sans-serif",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  background: '#EF4444',
+                  border: 'none',
+                  borderRadius: 0,
+                  color: '#FFFFFF',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  opacity: loading ? 0.7 : 1,
+                }}
+              >
+                {loading ? 'DELETING...' : 'DELETE ACCOUNT'}
               </button>
             </div>
           </div>
@@ -360,31 +489,72 @@ function DangerTab({ logout, navigate }) {
 // ─── Shared ───────────────────────────────────────────────────────────────────
 function Card({ title, children }) {
   return (
-    <div style={{ background: '#1e1e2a', border: '1px solid #2a2a3a', borderRadius: 14, padding: '20px 18px' }}>
-      <h2 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 700, color: '#f1f5f9' }}>{title}</h2>
+    <div style={{ background: '#111111', border: '1px solid #222222', borderRadius: 0, padding: '20px 18px' }}>
+      <h2 style={{
+        margin: '0 0 16px',
+        fontFamily: "'Oswald', sans-serif",
+        fontSize: 15,
+        fontWeight: 700,
+        color: '#FFFFFF',
+        textTransform: 'uppercase',
+        letterSpacing: '0.05em',
+      }}>{title}</h2>
       {children}
     </div>
   );
 }
 
 const inputStyle = {
-  width: '100%', padding: '10px 14px', background: '#0f0f14', border: '1px solid #2a2a3a',
-  borderRadius: 10, color: '#f1f5f9', fontSize: 14, outline: 'none', boxSizing: 'border-box',
+  width: '100%',
+  height: 48,
+  padding: '0 16px',
+  background: '#111111',
+  border: '1px solid #222222',
+  borderRadius: 0,
+  color: '#FFFFFF',
+  fontFamily: "'Inter', sans-serif",
+  fontSize: 15,
+  fontWeight: 400,
+  outline: 'none',
+  boxSizing: 'border-box',
 };
-const labelStyle = { display: 'block', fontSize: 12, fontWeight: 600, color: '#64748b', marginBottom: 5 };
+
+const labelStyle = {
+  display: 'block',
+  fontFamily: "'Inter', sans-serif",
+  fontSize: 11,
+  fontWeight: 500,
+  textTransform: 'uppercase',
+  letterSpacing: '2px',
+  color: '#555555',
+  marginBottom: 6,
+};
+
 const eyeBtn = {
-  position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+  position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
   background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex',
 };
+
 const btnPrimary = (loading) => ({
-  width: '100%', padding: '11px', background: '#3b82f6', color: '#fff', border: 'none',
-  borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer',
-  opacity: loading ? 0.7 : 1, marginTop: 4,
+  width: '100%',
+  height: 48,
+  fontFamily: "'Oswald', sans-serif",
+  fontSize: 14,
+  fontWeight: 700,
+  textTransform: 'uppercase',
+  letterSpacing: '0.05em',
+  background: '#E8FF00',
+  color: '#000000',
+  border: 'none',
+  borderRadius: 0,
+  cursor: loading ? 'not-allowed' : 'pointer',
+  opacity: loading ? 0.7 : 1,
+  marginTop: 8,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 6,
 });
-const btnDanger = {
-  padding: '11px 16px', background: '#1a1a2e', border: '1px solid #ef4444', borderRadius: 10,
-  color: '#ef4444', fontSize: 14, fontWeight: 600, cursor: 'pointer',
-};
 
 // ─── Data Tab ─────────────────────────────────────────────────────────────────
 function DataTab() {
@@ -434,25 +604,50 @@ function DataTab() {
     }
   }
 
+  const exportBtnStyle = (disabled) => ({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    width: '100%',
+    height: 48,
+    fontFamily: "'Inter', sans-serif",
+    fontSize: 13,
+    fontWeight: 500,
+    background: 'transparent',
+    border: '1px solid #222222',
+    borderRadius: 0,
+    color: '#FFFFFF',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    opacity: disabled ? 0.7 : 1,
+  });
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
-        <h2 style={{ color: '#f1f5f9', fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Export My Data</h2>
-        <p style={{ color: '#64748b', fontSize: 13, lineHeight: 1.5, marginBottom: 16 }}>
-          Download all your data. JSON includes everything — workouts, programmes, metrics, PRs. CSV is workouts only.
+        <h2 style={{
+          fontFamily: "'Oswald', sans-serif",
+          fontSize: 16,
+          fontWeight: 700,
+          color: '#FFFFFF',
+          textTransform: 'uppercase',
+          letterSpacing: '0.02em',
+          marginBottom: 8,
+        }}>EXPORT MY DATA</h2>
+        <p style={{ fontFamily: "'Inter', sans-serif", color: '#555555', fontSize: 13, lineHeight: 1.5, marginBottom: 16 }}>
+          Download all your data. JSON includes everything -- workouts, programmes, metrics, PRs. CSV is workouts only.
         </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <button onClick={exportJson} disabled={exporting} style={btnPrimary(exporting)}>
-            <Download size={14} style={{ display: 'inline', marginRight: 6 }} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <button onClick={exportJson} disabled={exporting} style={exportBtnStyle(exporting)}>
+            <Download size={14} />
             Export all data (JSON)
           </button>
-          <button onClick={exportCsv} disabled={exporting}
-            style={{ ...btnPrimary(false), background: '#10b981' }}>
-            <Download size={14} style={{ display: 'inline', marginRight: 6 }} />
+          <button onClick={exportCsv} disabled={exporting} style={exportBtnStyle(exporting)}>
+            <Download size={14} />
             Export workout history (CSV)
           </button>
         </div>
-        {msg && <p style={{ color: '#10b981', fontSize: 13, marginTop: 8 }}>{msg}</p>}
+        {msg && <p style={{ fontFamily: "'Inter', sans-serif", color: '#10b981', fontSize: 13, marginTop: 8 }}>{msg}</p>}
       </div>
     </div>
   );
