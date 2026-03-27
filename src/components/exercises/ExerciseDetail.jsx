@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Star, ExternalLink, ChevronRight } from 'lucide-react';
+import { Star, ExternalLink, ChevronRight, ChevronLeft } from 'lucide-react';
 import { exercises as exercisesApi } from '../../services/api';
-import ScreenHeader from '../shared/ScreenHeader';
 import LoadingState from '../shared/LoadingState';
 
 const MUSCLE_POSITIONS = {
@@ -61,12 +60,11 @@ export default function ExerciseDetail() {
 
   if (loading) return <LoadingState message="Loading exercise..." />;
   if (!exercise) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: '#0a0a0f', color: '#f8fafc' }}>
+    <div className="min-h-screen flex items-center justify-center" style={{ background: '#0A0A0A', color: '#FFFFFF' }}>
       Exercise not found.
     </div>
   );
 
-  const diffColor = { beginner: '#10b981', intermediate: '#f97316', advanced: '#ef4444' };
   const ytQuery = exercise.video_search_query || exercise.name;
   const ytUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(ytQuery + ' exercise form')}`;
 
@@ -74,111 +72,252 @@ export default function ExerciseDetail() {
   const secondaryMuscles = exercise.secondary_muscles || [];
 
   return (
-    <div className="flex flex-col min-h-screen max-w-[430px] mx-auto pb-24" style={{ background: '#0a0a0f' }}>
-      <ScreenHeader
-        title={exercise.name}
-        onBack={() => navigate(-1)}
-        right={
-          <button onClick={toggleFav} className="btn-press p-1">
-            <Star size={20} style={{ color: isFav ? '#f59e0b' : '#475569' }} fill={isFav ? '#f59e0b' : 'none'} />
-          </button>
-        }
-      />
+    <div className="flex flex-col min-h-screen max-w-[430px] mx-auto pb-24" style={{ background: '#0A0A0A' }}>
+      {/* Header */}
+      <div className="px-4 pt-4 pb-4 flex items-center gap-3" style={{ borderBottom: '1px solid #222222' }}>
+        <button onClick={() => navigate(-1)} className="btn-press" style={{ color: '#555555' }}>
+          <ChevronLeft size={22} />
+        </button>
+        <div className="flex-1">
+          <h1
+            style={{
+              fontFamily: "'Oswald', sans-serif",
+              fontSize: '28px',
+              fontWeight: 700,
+              color: '#FFFFFF',
+              textTransform: 'uppercase',
+              margin: 0,
+              lineHeight: 1.1,
+            }}
+          >
+            {exercise.name}
+          </h1>
+        </div>
+        <button onClick={toggleFav} className="btn-press p-1">
+          <Star size={20} style={{ color: isFav ? '#E8FF00' : '#555555' }} fill={isFav ? '#E8FF00' : 'none'} />
+        </button>
+      </div>
 
-      <div className="px-5 space-y-4">
+      <div className="px-4">
         {/* Tags */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 py-4" style={{ borderBottom: '1px solid #222222' }}>
           {exercise.difficulty && (
-            <Tag label={exercise.difficulty} color={diffColor[exercise.difficulty]} />
+            <Tag label={exercise.difficulty} />
           )}
-          {exercise.is_compound && <Tag label="Compound" color="#8b5cf6" />}
-          {exercise.movement_pattern && <Tag label={exercise.movement_pattern} color="#475569" />}
-          {exercise.exercise_type && <Tag label={exercise.exercise_type} color="#06b6d4" />}
+          {exercise.is_compound && <Tag label="Compound" />}
+          {exercise.movement_pattern && <Tag label={exercise.movement_pattern} />}
+          {exercise.exercise_type && <Tag label={exercise.exercise_type} />}
         </div>
 
         {/* Muscle diagram */}
         <MuscleDiagram primaryMuscles={primaryMuscles} secondaryMuscles={secondaryMuscles} />
 
         {/* Muscles */}
-        <div className="p-4 rounded-2xl" style={{ background: '#111118', border: '1px solid #1e1e2e' }}>
+        <div className="py-4" style={{ borderBottom: '1px solid #222222' }}>
           <div className="mb-2">
-            <span className="text-xs font-semibold" style={{ color: '#475569', letterSpacing: '0.05em' }}>PRIMARY</span>
-            <span className="ml-2 text-sm capitalize font-medium" style={{ color: '#6366f1' }}>{exercise.primary_muscle}</span>
+            <span
+              style={{
+                fontFamily: "'Inter', sans-serif",
+                fontSize: '11px',
+                fontWeight: 500,
+                color: '#555555',
+                textTransform: 'uppercase',
+                letterSpacing: '2px',
+              }}
+            >
+              PRIMARY
+            </span>
+            <span
+              className="ml-2"
+              style={{
+                fontFamily: "'Inter', sans-serif",
+                fontSize: '14px',
+                fontWeight: 500,
+                color: '#E8FF00',
+                textTransform: 'capitalize',
+              }}
+            >
+              {exercise.primary_muscle}
+            </span>
           </div>
           {secondaryMuscles.length > 0 && (
             <div>
-              <span className="text-xs font-semibold" style={{ color: '#475569', letterSpacing: '0.05em' }}>SECONDARY</span>
-              <span className="ml-2 text-sm capitalize" style={{ color: '#94a3b8' }}>{secondaryMuscles.join(', ')}</span>
+              <span
+                style={{
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: '11px',
+                  fontWeight: 500,
+                  color: '#555555',
+                  textTransform: 'uppercase',
+                  letterSpacing: '2px',
+                }}
+              >
+                SECONDARY
+              </span>
+              <span
+                className="ml-2"
+                style={{
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: '14px',
+                  fontWeight: 400,
+                  color: '#888888',
+                  textTransform: 'capitalize',
+                }}
+              >
+                {secondaryMuscles.join(', ')}
+              </span>
             </div>
           )}
           {exercise.equipment?.length > 0 && (
             <div className="mt-2">
-              <span className="text-xs font-semibold" style={{ color: '#475569', letterSpacing: '0.05em' }}>EQUIPMENT</span>
-              <span className="ml-2 text-sm capitalize" style={{ color: '#94a3b8' }}>{exercise.equipment.join(', ')}</span>
+              <span
+                style={{
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: '11px',
+                  fontWeight: 500,
+                  color: '#555555',
+                  textTransform: 'uppercase',
+                  letterSpacing: '2px',
+                }}
+              >
+                EQUIPMENT
+              </span>
+              <span
+                className="ml-2"
+                style={{
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: '14px',
+                  fontWeight: 400,
+                  color: '#888888',
+                  textTransform: 'capitalize',
+                }}
+              >
+                {exercise.equipment.join(', ')}
+              </span>
             </div>
           )}
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b" style={{ borderColor: '#1e1e2e' }}>
+        <div className="flex" style={{ borderBottom: '1px solid #222222' }}>
           {['instructions','cues','mistakes','progression'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className="flex-1 py-2.5 text-xs font-semibold capitalize relative btn-press"
-              style={{ color: activeTab === tab ? '#818cf8' : '#475569' }}
+              className="flex-1 py-3 relative btn-press"
+              style={{
+                fontFamily: "'Inter', sans-serif",
+                fontSize: '11px',
+                fontWeight: 500,
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+                color: activeTab === tab ? '#E8FF00' : '#555555',
+                background: 'transparent',
+                border: 'none',
+              }}
             >
-              {tab === 'cues' ? 'Form Cues' : tab === 'mistakes' ? 'Mistakes' : tab}
+              {tab === 'cues' ? 'FORM CUES' : tab === 'mistakes' ? 'MISTAKES' : tab.toUpperCase()}
               {activeTab === tab && (
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-full" style={{ background: '#6366f1' }} />
+                <div
+                  className="absolute bottom-0 left-0 right-0 h-0.5"
+                  style={{ background: '#E8FF00' }}
+                />
               )}
             </button>
           ))}
         </div>
 
         {/* Tab content */}
-        <div className="p-4 rounded-2xl" style={{ background: '#111118', border: '1px solid #1e1e2e' }}>
+        <div className="py-4" style={{ borderBottom: '1px solid #222222' }}>
           {activeTab === 'instructions' && (
-            <ol className="space-y-3">
+            <ol className="space-y-4">
               {(exercise.instructions || []).map((step, i) => (
                 <li key={i} className="flex gap-3">
-                  <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5"
-                    style={{ background: 'rgba(99,102,241,0.15)', color: '#818cf8' }}>{i + 1}</span>
-                  <p className="text-sm leading-relaxed" style={{ color: '#e2e8f0' }}>{step}</p>
+                  <span
+                    className="flex-shrink-0 mt-0.5"
+                    style={{
+                      fontFamily: "'Oswald', sans-serif",
+                      fontSize: '16px',
+                      fontWeight: 700,
+                      color: '#E8FF00',
+                      width: '24px',
+                    }}
+                  >
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  <p
+                    style={{
+                      fontFamily: "'Inter', sans-serif",
+                      fontSize: '14px',
+                      fontWeight: 400,
+                      lineHeight: '1.6',
+                      color: '#888888',
+                    }}
+                  >
+                    {step}
+                  </p>
                 </li>
               ))}
             </ol>
           )}
           {activeTab === 'cues' && (
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {(exercise.form_cues || []).map((cue, i) => (
-                <li key={i} className="flex gap-2 text-sm" style={{ color: '#e2e8f0' }}>
-                  <span style={{ color: '#10b981' }}>✓</span> {cue}
+                <li key={i} className="flex gap-2" style={{ fontFamily: "'Inter', sans-serif", fontSize: '14px', color: '#888888' }}>
+                  <span style={{ color: '#E8FF00' }}>+</span> {cue}
                 </li>
               ))}
             </ul>
           )}
           {activeTab === 'mistakes' && (
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {(exercise.common_mistakes || []).map((m, i) => (
-                <li key={i} className="flex gap-2 text-sm" style={{ color: '#e2e8f0' }}>
-                  <span style={{ color: '#ef4444' }}>✗</span> {m}
+                <li key={i} className="flex gap-2" style={{ fontFamily: "'Inter', sans-serif", fontSize: '14px', color: '#888888' }}>
+                  <span style={{ color: '#FFFFFF' }}>-</span> {m}
                 </li>
               ))}
             </ul>
           )}
           {activeTab === 'progression' && (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {exercise.beginner_modification && (
                 <div>
-                  <p className="text-xs font-semibold mb-1" style={{ color: '#10b981', letterSpacing: '0.05em' }}>EASIER VARIATION</p>
-                  <p className="text-sm leading-relaxed" style={{ color: '#e2e8f0' }}>{exercise.beginner_modification}</p>
+                  <p
+                    style={{
+                      fontFamily: "'Inter', sans-serif",
+                      fontSize: '11px',
+                      fontWeight: 500,
+                      color: '#555555',
+                      textTransform: 'uppercase',
+                      letterSpacing: '2px',
+                      marginBottom: '6px',
+                    }}
+                  >
+                    EASIER VARIATION
+                  </p>
+                  <p style={{ fontFamily: "'Inter', sans-serif", fontSize: '14px', lineHeight: '1.6', color: '#888888' }}>
+                    {exercise.beginner_modification}
+                  </p>
                 </div>
               )}
               {exercise.advanced_progression && (
                 <div>
-                  <p className="text-xs font-semibold mb-1" style={{ color: '#f97316', letterSpacing: '0.05em' }}>HARDER PROGRESSION</p>
-                  <p className="text-sm leading-relaxed" style={{ color: '#e2e8f0' }}>{exercise.advanced_progression}</p>
+                  <p
+                    style={{
+                      fontFamily: "'Inter', sans-serif",
+                      fontSize: '11px',
+                      fontWeight: 500,
+                      color: '#555555',
+                      textTransform: 'uppercase',
+                      letterSpacing: '2px',
+                      marginBottom: '6px',
+                    }}
+                  >
+                    HARDER PROGRESSION
+                  </p>
+                  <p style={{ fontFamily: "'Inter', sans-serif", fontSize: '14px', lineHeight: '1.6', color: '#888888' }}>
+                    {exercise.advanced_progression}
+                  </p>
                 </div>
               )}
             </div>
@@ -190,21 +329,45 @@ export default function ExerciseDetail() {
           href={ytUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-between w-full p-4 rounded-2xl btn-press"
-          style={{ background: '#111118', border: '1px solid #1e1e2e' }}
+          className="flex items-center justify-between w-full py-4 btn-press"
+          style={{
+            background: 'transparent',
+            borderBottom: '1px solid #222222',
+            textDecoration: 'none',
+          }}
         >
-          <span className="text-sm font-medium" style={{ color: '#f8fafc' }}>Watch on YouTube</span>
-          <ExternalLink size={16} style={{ color: '#475569' }} />
+          <span
+            style={{
+              fontFamily: "'Inter', sans-serif",
+              fontSize: '14px',
+              fontWeight: 500,
+              color: '#FFFFFF',
+            }}
+          >
+            Watch on YouTube
+          </span>
+          <ExternalLink size={16} style={{ color: '#555555' }} />
         </a>
       </div>
     </div>
   );
 }
 
-function Tag({ label, color }) {
+function Tag({ label }) {
   return (
-    <span className="px-3 py-1 rounded-full text-xs capitalize font-medium"
-      style={{ background: `${color}20`, color, border: `1px solid ${color}30` }}>
+    <span
+      className="px-3 py-1 capitalize"
+      style={{
+        fontFamily: "'Inter', sans-serif",
+        fontSize: '11px',
+        fontWeight: 500,
+        color: '#555555',
+        border: '1px solid #222222',
+        borderRadius: '0px',
+        background: 'transparent',
+        textTransform: 'capitalize',
+      }}
+    >
       {label}
     </span>
   );
@@ -212,20 +375,32 @@ function Tag({ label, color }) {
 
 function MuscleDiagram({ primaryMuscles, secondaryMuscles }) {
   return (
-    <div className="p-4 rounded-2xl" style={{ background: '#111118', border: '1px solid #1e1e2e' }}>
-      <p className="text-xs font-semibold mb-3" style={{ color: '#475569', letterSpacing: '0.06em' }}>MUSCLES TARGETED</p>
+    <div className="py-4" style={{ borderBottom: '1px solid #222222' }}>
+      <p
+        style={{
+          fontFamily: "'Inter', sans-serif",
+          fontSize: '11px',
+          fontWeight: 500,
+          color: '#555555',
+          textTransform: 'uppercase',
+          letterSpacing: '2px',
+          marginBottom: '12px',
+        }}
+      >
+        MUSCLES TARGETED
+      </p>
       <div className="flex gap-4 justify-center">
         <BodySVG side="front" primaryMuscles={primaryMuscles} secondaryMuscles={secondaryMuscles} />
         <BodySVG side="back" primaryMuscles={primaryMuscles} secondaryMuscles={secondaryMuscles} />
       </div>
       <div className="flex gap-4 justify-center mt-2">
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full" style={{ background: '#6366f1' }} />
-          <span className="text-xs" style={{ color: '#475569' }}>Primary</span>
+          <div className="w-3 h-3" style={{ background: '#E8FF00' }} />
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '10px', color: '#555555' }}>Primary</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full" style={{ background: 'rgba(99,102,241,0.3)' }} />
-          <span className="text-xs" style={{ color: '#475569' }}>Secondary</span>
+          <div className="w-3 h-3" style={{ background: 'rgba(232,255,0,0.3)' }} />
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '10px', color: '#555555' }}>Secondary</span>
         </div>
       </div>
     </div>
@@ -234,19 +409,19 @@ function MuscleDiagram({ primaryMuscles, secondaryMuscles }) {
 
 function BodySVG({ side, primaryMuscles, secondaryMuscles }) {
   const isFront = side === 'front';
-  const primary = 'rgba(99,102,241,0.75)';
-  const secondary = 'rgba(99,102,241,0.3)';
+  const primary = 'rgba(232,255,0,0.75)';
+  const secondary = 'rgba(232,255,0,0.3)';
   return (
     <svg width="80" height="180" viewBox="0 0 80 180">
       {/* Body outline */}
-      <ellipse cx="40" cy="18" rx="12" ry="14" fill="#1a1a24" stroke="#2d2d3d" strokeWidth="1" />
-      <rect x="35" y="30" width="10" height="8" fill="#1a1a24" stroke="#2d2d3d" strokeWidth="1" />
-      <path d="M20 38 Q15 50 18 90 L62 90 Q65 50 60 38 Z" fill="#1a1a24" stroke="#2d2d3d" strokeWidth="1" />
-      <path d="M18 40 Q10 55 12 85 Q14 90 18 90 Q20 65 20 40" fill="#1a1a24" stroke="#2d2d3d" strokeWidth="1" />
-      <path d="M62 40 Q70 55 68 85 Q66 90 62 90 Q60 65 60 40" fill="#1a1a24" stroke="#2d2d3d" strokeWidth="1" />
-      <path d="M18 90 Q16 110 20 115 L60 115 Q64 110 62 90 Z" fill="#1a1a24" stroke="#2d2d3d" strokeWidth="1" />
-      <path d="M20 115 Q17 145 19 175 L35 175 Q36 145 33 115" fill="#1a1a24" stroke="#2d2d3d" strokeWidth="1" />
-      <path d="M60 115 Q63 145 61 175 L45 175 Q44 145 47 115" fill="#1a1a24" stroke="#2d2d3d" strokeWidth="1" />
+      <ellipse cx="40" cy="18" rx="12" ry="14" fill="#111111" stroke="#222222" strokeWidth="1" />
+      <rect x="35" y="30" width="10" height="8" fill="#111111" stroke="#222222" strokeWidth="1" />
+      <path d="M20 38 Q15 50 18 90 L62 90 Q65 50 60 38 Z" fill="#111111" stroke="#222222" strokeWidth="1" />
+      <path d="M18 40 Q10 55 12 85 Q14 90 18 90 Q20 65 20 40" fill="#111111" stroke="#222222" strokeWidth="1" />
+      <path d="M62 40 Q70 55 68 85 Q66 90 62 90 Q60 65 60 40" fill="#111111" stroke="#222222" strokeWidth="1" />
+      <path d="M18 90 Q16 110 20 115 L60 115 Q64 110 62 90 Z" fill="#111111" stroke="#222222" strokeWidth="1" />
+      <path d="M20 115 Q17 145 19 175 L35 175 Q36 145 33 115" fill="#111111" stroke="#222222" strokeWidth="1" />
+      <path d="M60 115 Q63 145 61 175 L45 175 Q44 145 47 115" fill="#111111" stroke="#222222" strokeWidth="1" />
 
       {isFront && primaryMuscles.includes('chest') && (
         <ellipse cx="40" cy="60" rx="16" ry="12" fill={primary} />
@@ -328,7 +503,7 @@ function BodySVG({ side, primaryMuscles, secondaryMuscles }) {
         </>
       )}
 
-      <text x="40" y="178" textAnchor="middle" fontSize="8" fill="#475569">{isFront ? 'Front' : 'Back'}</text>
+      <text x="40" y="178" textAnchor="middle" fontSize="8" fill="#555555">{isFront ? 'Front' : 'Back'}</text>
     </svg>
   );
 }
