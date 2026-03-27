@@ -11,65 +11,58 @@ import { recovery as recoveryApi } from '../../../services/api';
 import { getScoreInfo } from '../../recovery/RecoveryCheckin';
 
 const FOCUS_OPTIONS = [
-  { id: 'strength',  emoji: '💪', label: 'Strength & Muscle',      sub: 'Build size and power' },
-  { id: 'cardio',    emoji: '🔥', label: 'Fat Burn & Cardio',      sub: 'Burn calories, elevate heart rate' },
-  { id: 'endurance', emoji: '🏃', label: 'Endurance',              sub: 'Improve stamina and capacity' },
-  { id: 'mobility',  emoji: '🧘', label: 'Mobility & Recovery',    sub: 'Stretch, restore, de-stress' },
-  { id: 'athletic',  emoji: '⚡', label: 'Athletic Performance',   sub: 'Speed, power, agility' },
-  { id: 'custom',    emoji: '🎯', label: 'Custom',                  sub: "I'll tell you exactly what I want" },
+  { id: 'strength',  label: 'Strength & Muscle',      sub: 'Build size and power' },
+  { id: 'cardio',    label: 'Fat Burn & Cardio',      sub: 'Burn calories, elevate heart rate' },
+  { id: 'endurance', label: 'Endurance',              sub: 'Improve stamina and capacity' },
+  { id: 'mobility',  label: 'Mobility & Recovery',    sub: 'Stretch, restore, de-stress' },
+  { id: 'athletic',  label: 'Athletic Performance',   sub: 'Speed, power, agility' },
+  { id: 'custom',    label: 'Custom',                  sub: "I'll tell you exactly what I want" },
 ];
 
 const LOCATION_OPTIONS = [
-  { id: 'gym',     emoji: '🏋️', label: 'Gym',             sub: 'Full equipment available' },
-  { id: 'home',    emoji: '🏠', label: 'Home',            sub: 'Bodyweight / limited kit' },
-  { id: 'outdoors',emoji: '🌿', label: 'Outdoors',        sub: 'Park, track, open space' },
-  { id: 'hotel',   emoji: '🏨', label: 'Hotel / Minimal', sub: 'Tight space, no equipment' },
+  { id: 'gym',     label: 'Gym',             sub: 'Full equipment available' },
+  { id: 'home',    label: 'Home',            sub: 'Bodyweight / limited kit' },
+  { id: 'outdoors',label: 'Outdoors',        sub: 'Park, track, open space' },
+  { id: 'hotel',   label: 'Hotel / Minimal', sub: 'Tight space, no equipment' },
 ];
 
 const DURATION_OPTIONS = [15, 20, 30, 45, 60, 90];
 
 const ENERGY_OPTIONS = [
-  { id: 'tired',   emoji: '😴', label: 'Tired / Low energy',  sub: 'Light session, movement quality focus' },
-  { id: 'average', emoji: '😐', label: 'Average energy',       sub: 'Moderate intensity is fine' },
-  { id: 'good',    emoji: '💪', label: 'Feeling good',         sub: "Let's push today" },
-  { id: 'great',   emoji: '🔥', label: 'Feeling great',        sub: 'Full send — beast mode' },
+  { id: 'tired',   label: 'Tired / Low energy',  sub: 'Light session, movement quality focus' },
+  { id: 'average', label: 'Average energy',       sub: 'Moderate intensity is fine' },
+  { id: 'good',    label: 'Feeling good',         sub: "Let's push today" },
+  { id: 'great',   label: 'Feeling great',        sub: 'Full send — beast mode' },
 ];
 
 const AVOID_CHIPS = ['Lower back', 'Knees', 'Shoulders', 'Wrists', 'Hips', 'Skip this'];
 
-function StepHeader({ step, total, onBack, title }) {
+function StepHeader({ step, total, onBack }) {
   return (
-    <div style={{ background: '#0a0a0f' }}>
-      <div className="flex items-center gap-3 px-5 pt-4 pb-3">
+    <div style={{ background: '#0A0A0A' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px 12px' }}>
         <button
           onClick={onBack}
-          className="btn-press flex items-center justify-center rounded-full flex-shrink-0"
-          style={{ width: 36, height: 36, background: '#111118', border: '1px solid #2d2d3d', color: '#94a3b8' }}
+          className="btn-press"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: 40, height: 40, background: 'transparent',
+            border: '1px solid #222222', borderRadius: 0,
+            color: '#888888', cursor: 'pointer',
+          }}
         >
           <ChevronLeft size={18} />
         </button>
-        <div className="flex-1 flex items-center gap-2 justify-center">
-          {Array.from({ length: total }).map((_, i) => (
-            <div
-              key={i}
-              className="rounded-full"
-              style={{
-                width: i === step ? 20 : 6,
-                height: 6,
-                background: i === step ? '#6366f1' : i < step ? '#4338ca' : '#2d2d3d',
-                transition: 'all 0.3s',
-              }}
-            />
-          ))}
-        </div>
-        <div style={{ width: 36 }} />
+        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, letterSpacing: 3, color: '#555555', textTransform: 'uppercase' }}>
+          {step + 1} / {total}
+        </span>
       </div>
-      <div style={{ height: 2, background: '#1e1e2e' }}>
+      <div style={{ height: 2, background: '#222222' }}>
         <div
           style={{
             height: '100%',
             width: `${((step + 1) / total) * 100}%`,
-            background: '#6366f1',
+            background: '#E8FF00',
             transition: 'width 0.4s ease',
           }}
         />
@@ -78,30 +71,33 @@ function StepHeader({ step, total, onBack, title }) {
   );
 }
 
-function OptionCard({ emoji, label, sub, selected, onClick }) {
+function OptionCard({ label, sub, selected, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-4 px-4 py-4 rounded-2xl text-left w-full btn-press"
+      className="btn-press"
       style={{
-        background: selected ? 'rgba(99,102,241,0.1)' : '#111118',
-        border: `2px solid ${selected ? '#6366f1' : '#1e1e2e'}`,
-        transition: 'border-color 0.15s, background 0.15s',
+        display: 'flex', flexDirection: 'column', justifyContent: 'center',
+        width: '100%', textAlign: 'left',
+        padding: 16, minHeight: 48,
+        background: selected ? '#E8FF00' : 'transparent',
+        border: `1px solid ${selected ? '#E8FF00' : '#222222'}`,
+        borderRadius: 0, cursor: 'pointer',
+        transition: 'background 0.15s, border-color 0.15s',
       }}
     >
-      <span style={{ fontSize: 26, flexShrink: 0 }}>{emoji}</span>
-      <div className="flex-1 min-w-0">
-        <div className="font-semibold text-sm" style={{ color: '#f8fafc' }}>{label}</div>
-        {sub && <div className="text-xs mt-0.5" style={{ color: '#94a3b8' }}>{sub}</div>}
+      <div style={{
+        fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 500,
+        color: selected ? '#000000' : '#FFFFFF',
+      }}>
+        {label}
       </div>
-      {selected && (
-        <div
-          className="flex-shrink-0 rounded-full flex items-center justify-center"
-          style={{ width: 20, height: 20, background: '#6366f1' }}
-        >
-          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-            <path d="M1 4L3.5 6.5L9 1.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+      {sub && (
+        <div style={{
+          fontFamily: "'Inter', sans-serif", fontSize: 12, marginTop: 2,
+          color: selected ? 'rgba(0,0,0,0.5)' : '#555555',
+        }}>
+          {sub}
         </div>
       )}
     </button>
@@ -197,28 +193,22 @@ export default function NewWorkout() {
   if (loading) {
     return (
       <div
-        className="flex flex-col min-h-screen max-w-[430px] mx-auto items-center justify-center gap-6 px-5"
-        style={{ background: '#0a0a0f' }}
+        className="flex flex-col min-h-screen max-w-[430px] mx-auto items-center justify-center gap-6 px-6"
+        style={{ background: '#0A0A0A' }}
       >
-        <div
-          className="w-20 h-20 rounded-full flex items-center justify-center"
-          style={{ background: 'rgba(99,102,241,0.12)', border: '1px solid #6366f140' }}
-        >
-          <Zap size={36} style={{ color: '#6366f1' }} className="animate-pulse-slow" />
+        <Zap size={36} style={{ color: '#E8FF00' }} className="animate-pulse" />
+        <div style={{ textAlign: 'center' }}>
+          <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 28, fontWeight: 700, color: '#FFFFFF', textTransform: 'uppercase', marginBottom: 8 }}>
+            Generating...
+          </h2>
+          <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#555555' }}>
+            Your trainer is crafting something great.
+          </p>
         </div>
-        <div className="text-center">
-          <h2 className="font-bold text-xl mb-2" style={{ color: '#f8fafc' }}>Building your workout…</h2>
-          <p className="text-sm" style={{ color: '#94a3b8' }}>Your trainer is crafting something great.</p>
-        </div>
-        <div className="w-48 h-1 rounded-full overflow-hidden" style={{ background: '#1e1e2e' }}>
+        <div style={{ width: 192, height: 3, background: '#222222' }}>
           <div
-            className="h-full rounded-full"
-            style={{
-              background: '#6366f1',
-              animation: 'shimmer 1.5s infinite',
-              backgroundImage: 'linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #6366f1 100%)',
-              backgroundSize: '200% 100%',
-            }}
+            className="animate-pulse"
+            style={{ width: '60%', height: '100%', background: '#E8FF00' }}
           />
         </div>
       </div>
@@ -227,9 +217,13 @@ export default function NewWorkout() {
 
   if (error) {
     return (
-      <div className="flex flex-col min-h-screen max-w-[430px] mx-auto" style={{ background: '#0a0a0f' }}>
-        <div className="flex items-center gap-3 px-5 pt-4">
-          <button onClick={() => setError(null)} className="btn-press" style={{ color: '#94a3b8' }}>
+      <div className="flex flex-col min-h-screen max-w-[430px] mx-auto" style={{ background: '#0A0A0A' }}>
+        <div style={{ padding: '16px 24px' }}>
+          <button
+            onClick={() => setError(null)}
+            className="btn-press"
+            style={{ color: '#888888', background: 'none', border: 'none', cursor: 'pointer' }}
+          >
             <ChevronLeft size={20} />
           </button>
         </div>
@@ -253,98 +247,89 @@ export default function NewWorkout() {
 
   const steps = [
     // Step 0 — Focus
-    <div key={0} className="flex flex-col gap-3">
-      <div className="mb-2">
-        <h2 className="font-bold" style={{ color: '#f8fafc', fontSize: 24, letterSpacing: '-0.02em' }}>
-          What&apos;s the focus today?
-        </h2>
-      </div>
-      <div className="flex flex-col gap-2">
-        {FOCUS_OPTIONS.map(opt => (
-          <OptionCard
-            key={opt.id}
-            emoji={opt.emoji}
-            label={opt.label}
-            sub={opt.sub}
-            selected={config.focus === opt.id}
-            onClick={() => { update('focus', opt.id); if (opt.id !== 'custom') setStep(1); }}
+    <div key={0} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 28, fontWeight: 700, color: '#FFFFFF', textTransform: 'uppercase', marginBottom: 12 }}>
+        What&apos;s the focus?
+      </h2>
+      {FOCUS_OPTIONS.map(opt => (
+        <OptionCard
+          key={opt.id}
+          label={opt.label}
+          sub={opt.sub}
+          selected={config.focus === opt.id}
+          onClick={() => { update('focus', opt.id); if (opt.id !== 'custom') setStep(1); }}
+        />
+      ))}
+      {config.focus === 'custom' && (
+        <>
+          <textarea
+            autoFocus
+            placeholder="e.g. chest and triceps, moderate intensity, no barbells..."
+            value={config.customFocus}
+            onChange={e => update('customFocus', e.target.value)}
+            rows={3}
+            style={{
+              width: '100%', padding: '12px 16px', background: '#111111',
+              border: '1px solid #222222', borderRadius: 0, color: '#FFFFFF',
+              fontFamily: "'Inter', sans-serif", fontSize: 14, outline: 'none', resize: 'none',
+            }}
           />
-        ))}
-        {config.focus === 'custom' && (
-          <>
-            <textarea
-              autoFocus
-              placeholder="e.g. chest and triceps, moderate intensity, no barbells..."
-              value={config.customFocus}
-              onChange={e => update('customFocus', e.target.value)}
-              rows={3}
-              className="w-full px-4 py-3 rounded-xl outline-none resize-none"
-              style={{ background: '#111118', border: '1px solid #6366f1', color: '#f8fafc', fontSize: 14 }}
-            />
-            <button
-              onClick={() => setStep(1)}
-              disabled={!config.customFocus.trim()}
-              className="w-full py-4 rounded-full font-bold btn-press"
-              style={{
-                background: config.customFocus.trim() ? '#6366f1' : '#1e1e2e',
-                color: config.customFocus.trim() ? '#fff' : '#475569',
-              }}
-            >
-              Continue →
-            </button>
-          </>
-        )}
-      </div>
+          <button
+            onClick={() => setStep(1)}
+            disabled={!config.customFocus.trim()}
+            className="btn-press"
+            style={{
+              width: '100%', padding: '16px', border: 'none', cursor: 'pointer',
+              fontFamily: "'Oswald', sans-serif", fontWeight: 700, fontSize: 14,
+              letterSpacing: 2, textTransform: 'uppercase',
+              background: config.customFocus.trim() ? '#E8FF00' : '#222222',
+              color: config.customFocus.trim() ? '#000000' : '#555555',
+            }}
+          >
+            Continue →
+          </button>
+        </>
+      )}
     </div>,
 
     // Step 1 — Location
-    <div key={1} className="flex flex-col gap-3">
-      <div className="mb-2">
-        <h2 className="font-bold" style={{ color: '#f8fafc', fontSize: 24, letterSpacing: '-0.02em' }}>
-          Where are you training?
-        </h2>
-      </div>
-      <div className="flex flex-col gap-2">
-        {LOCATION_OPTIONS.map(opt => (
-          <OptionCard
-            key={opt.id}
-            emoji={opt.emoji}
-            label={opt.label}
-            sub={opt.sub}
-            selected={config.location === opt.id}
-            onClick={() => { update('location', opt.id); setStep(2); }}
-          />
-        ))}
-      </div>
+    <div key={1} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 28, fontWeight: 700, color: '#FFFFFF', textTransform: 'uppercase', marginBottom: 12 }}>
+        Where are you training?
+      </h2>
+      {LOCATION_OPTIONS.map(opt => (
+        <OptionCard
+          key={opt.id}
+          label={opt.label}
+          sub={opt.sub}
+          selected={config.location === opt.id}
+          onClick={() => { update('location', opt.id); setStep(2); }}
+        />
+      ))}
     </div>,
 
     // Step 2 — Duration
-    <div key={2} className="flex flex-col gap-5">
-      <div>
-        <h2 className="font-bold" style={{ color: '#f8fafc', fontSize: 24, letterSpacing: '-0.02em' }}>
-          How long do you have?
-        </h2>
-        <p className="text-sm mt-1" style={{ color: '#94a3b8' }}>Including warm-up and cool-down</p>
-      </div>
-      {/* Selected duration display */}
-      <div className="text-center py-4">
-        <span style={{ fontSize: 56, fontWeight: 800, color: '#6366f1', letterSpacing: '-0.03em' }}>
+    <div key={2} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 28, fontWeight: 700, color: '#FFFFFF', textTransform: 'uppercase' }}>
+        How long?
+      </h2>
+      <div style={{ textAlign: 'center', padding: '16px 0' }}>
+        <span style={{ fontFamily: "'Oswald', sans-serif", fontSize: 56, fontWeight: 700, color: '#E8FF00' }}>
           {config.duration}
         </span>
-        <span style={{ fontSize: 20, color: '#475569', marginLeft: 4 }}>min</span>
+        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, color: '#555555', marginLeft: 4 }}>min</span>
       </div>
-      <div className="grid grid-cols-3 gap-2.5">
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 1, background: '#222222' }}>
         {DURATION_OPTIONS.map(mins => (
           <button
             key={mins}
             onClick={() => update('duration', mins)}
-            className="py-3.5 rounded-2xl font-bold btn-press"
+            className="btn-press"
             style={{
-              background: config.duration === mins ? '#6366f1' : '#111118',
-              border: `1px solid ${config.duration === mins ? '#6366f1' : '#1e1e2e'}`,
-              color: config.duration === mins ? '#fff' : '#94a3b8',
-              fontSize: 16,
-              transition: 'all 0.15s',
+              padding: '14px', border: 'none', cursor: 'pointer',
+              background: config.duration === mins ? '#E8FF00' : '#111111',
+              color: config.duration === mins ? '#000000' : '#888888',
+              fontFamily: "'Oswald', sans-serif", fontSize: 16, fontWeight: 700,
             }}
           >
             {mins}<span style={{ fontSize: 11, fontWeight: 400, marginLeft: 2 }}>m</span>
@@ -353,25 +338,27 @@ export default function NewWorkout() {
       </div>
       <button
         onClick={() => setStep(3)}
-        className="w-full py-4 rounded-full font-bold btn-press mt-2"
-        style={{ background: '#6366f1', color: '#fff', fontSize: 16 }}
+        className="btn-press"
+        style={{
+          width: '100%', padding: '16px', border: 'none', cursor: 'pointer',
+          background: '#E8FF00', color: '#000000',
+          fontFamily: "'Oswald', sans-serif", fontWeight: 700, fontSize: 14,
+          letterSpacing: 2, textTransform: 'uppercase',
+        }}
       >
         Continue →
       </button>
     </div>,
 
     // Step 3 — Energy + Avoid
-    <div key={3} className="flex flex-col gap-5">
-      <div>
-        <h2 className="font-bold" style={{ color: '#f8fafc', fontSize: 24, letterSpacing: '-0.02em' }}>
-          How are you feeling?
-        </h2>
-      </div>
-      <div className="flex flex-col gap-2">
+    <div key={3} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 28, fontWeight: 700, color: '#FFFFFF', textTransform: 'uppercase' }}>
+        How are you feeling?
+      </h2>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {ENERGY_OPTIONS.map(opt => (
           <OptionCard
             key={opt.id}
-            emoji={opt.emoji}
             label={opt.label}
             sub={opt.sub}
             selected={config.energy === opt.id}
@@ -380,20 +367,22 @@ export default function NewWorkout() {
         ))}
       </div>
       <div>
-        <p className="text-xs font-semibold mb-2" style={{ color: '#94a3b8', letterSpacing: '0.05em' }}>
-          AREAS TO AVOID TODAY?
+        <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, letterSpacing: 2, color: '#555555', textTransform: 'uppercase', marginBottom: 8 }}>
+          Areas to avoid today?
         </p>
-        <div className="flex flex-wrap gap-2">
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {AVOID_CHIPS.map(chip => (
             <button
               key={chip}
               onClick={() => toggleAvoid(chip)}
-              className="px-3.5 py-2 rounded-full text-sm font-medium btn-press"
+              className="btn-press"
               style={{
-                background: config.avoid.includes(chip) ? 'rgba(99,102,241,0.15)' : '#111118',
-                border: `1px solid ${config.avoid.includes(chip) ? '#6366f1' : '#2d2d3d'}`,
-                color: config.avoid.includes(chip) ? '#a5b4fc' : '#94a3b8',
-                transition: 'all 0.15s',
+                padding: '8px 16px', cursor: 'pointer',
+                fontFamily: "'Inter', sans-serif", fontSize: 12,
+                background: config.avoid.includes(chip) ? '#E8FF00' : 'transparent',
+                border: `1px solid ${config.avoid.includes(chip) ? '#E8FF00' : '#222222'}`,
+                borderRadius: 0,
+                color: config.avoid.includes(chip) ? '#000000' : '#888888',
               }}
             >
               {chip}
@@ -404,12 +393,13 @@ export default function NewWorkout() {
       <button
         onClick={() => setStep(4)}
         disabled={!config.energy}
-        className="w-full py-4 rounded-full font-bold btn-press"
+        className="btn-press"
         style={{
-          background: config.energy ? '#6366f1' : '#1e1e2e',
-          color: config.energy ? '#fff' : '#475569',
-          fontSize: 16,
-          transition: 'background 0.2s',
+          width: '100%', padding: '16px', border: 'none', cursor: 'pointer',
+          fontFamily: "'Oswald', sans-serif", fontWeight: 700, fontSize: 14,
+          letterSpacing: 2, textTransform: 'uppercase',
+          background: config.energy ? '#E8FF00' : '#222222',
+          color: config.energy ? '#000000' : '#555555',
         }}
       >
         Continue →
@@ -417,65 +407,63 @@ export default function NewWorkout() {
     </div>,
 
     // Step 4 — Notes
-    <div key={4} className="flex flex-col gap-4">
+    <div key={4} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
-        <h2 className="font-bold" style={{ color: '#f8fafc', fontSize: 24, letterSpacing: '-0.02em' }}>
-          Anything to tell your trainer?
+        <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 28, fontWeight: 700, color: '#FFFFFF', textTransform: 'uppercase' }}>
+          Anything else?
         </h2>
-        <p className="text-sm mt-2 leading-relaxed" style={{ color: '#94a3b8' }}>
+        <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#888888', marginTop: 8, lineHeight: 1.5 }}>
           Sore spots, exercises you hate, how you&apos;re really feeling today.
         </p>
       </div>
-      <div
-        className="rounded-2xl overflow-hidden"
-        style={{ background: '#111118', border: '1px solid #2d2d3d' }}
-      >
+      <div style={{ background: '#111111', border: '1px solid #222222' }}>
         <textarea
-          placeholder="e.g. left knee is a bit sore, skip heavy deadlifts today…"
+          placeholder="e.g. left knee is a bit sore, skip heavy deadlifts today..."
           value={config.notes}
           onChange={e => update('notes', e.target.value.slice(0, 200))}
           rows={5}
-          className="w-full px-4 py-4 outline-none resize-none"
-          style={{ background: 'transparent', color: '#f8fafc', fontSize: 15, fontStyle: 'italic' }}
+          style={{
+            width: '100%', padding: 16, background: 'transparent', border: 'none',
+            color: '#FFFFFF', fontFamily: "'Inter', sans-serif", fontSize: 15,
+            outline: 'none', resize: 'none',
+          }}
         />
-        <div className="flex justify-between items-center px-4 py-2" style={{ borderTop: '1px solid #1e1e2e' }}>
-          <span className="text-xs italic" style={{ color: '#475569' }}>Your trainer reads every note.</span>
-          <span className="text-xs" style={{ color: '#475569' }}>{config.notes.length}/200</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 16px', borderTop: '1px solid #222222' }}>
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: '#555555' }}>Your trainer reads every note.</span>
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: '#555555' }}>{config.notes.length}/200</span>
         </div>
       </div>
       <button
         onClick={() => setStep(5)}
-        className="w-full py-4 rounded-full font-bold btn-press"
-        style={{ background: '#6366f1', color: '#fff', fontSize: 16 }}
+        className="btn-press"
+        style={{
+          width: '100%', padding: '16px', border: 'none', cursor: 'pointer',
+          background: '#E8FF00', color: '#000000',
+          fontFamily: "'Oswald', sans-serif", fontWeight: 700, fontSize: 14,
+          letterSpacing: 2, textTransform: 'uppercase',
+        }}
       >
         Continue →
       </button>
     </div>,
 
     // Step 5 — Confirm
-    <div key={5} className="flex flex-col gap-4">
-      <div>
-        <h2 className="font-bold" style={{ color: '#f8fafc', fontSize: 24, letterSpacing: '-0.02em' }}>
-          Ready to generate?
-        </h2>
-      </div>
+    <div key={5} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 28, fontWeight: 700, color: '#FFFFFF', textTransform: 'uppercase' }}>
+        Ready to generate?
+      </h2>
 
       {/* Recovery card */}
       {todayRecovery && (() => {
         const score = todayRecovery.recovery_score;
         const info = getScoreInfo(score);
         return (
-          <div
-            className="p-4 rounded-2xl"
-            style={{ background: `${info.color}15`, border: `1px solid ${info.color}40` }}
-          >
-            <div className="flex items-center justify-between mb-1">
-              <p className="text-xs font-semibold" style={{ color: info.color, letterSpacing: '0.05em' }}>
-                RECOVERY TODAY — {score}/100
-              </p>
-            </div>
-            <p className="text-sm font-semibold" style={{ color: '#f8fafc' }}>{info.desc}</p>
-            <p className="text-xs mt-0.5" style={{ color: '#94a3b8' }}>
+          <div style={{ borderLeft: '3px solid #E8FF00', padding: '12px 16px' }}>
+            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, letterSpacing: 2, color: '#E8FF00', textTransform: 'uppercase', marginBottom: 4 }}>
+              Recovery Today — {score}/100
+            </p>
+            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 500, color: '#FFFFFF' }}>{info.desc}</p>
+            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: '#888888', marginTop: 4 }}>
               {score <= 40 ? '35% volume reduction applied' :
                score <= 65 ? '15% volume reduction applied' :
                score >= 86 ? 'Peak day — pushing harder' : 'Standard workout'}
@@ -483,10 +471,15 @@ export default function NewWorkout() {
             {score <= 65 && (
               <button
                 onClick={() => setOverrideRecovery(v => !v)}
-                className="mt-2 text-xs underline"
-                style={{ color: overrideRecovery ? '#10b981' : '#94a3b8' }}
+                className="btn-press"
+                style={{
+                  marginTop: 8, background: 'none', border: 'none', cursor: 'pointer',
+                  fontFamily: "'Inter', sans-serif", fontSize: 11,
+                  color: overrideRecovery ? '#22C55E' : '#555555',
+                  textDecoration: 'underline',
+                }}
               >
-                {overrideRecovery ? '✓ Override active — full workout' : 'Override: generate full workout anyway'}
+                {overrideRecovery ? 'Override active — full workout' : 'Override: generate full workout anyway'}
               </button>
             )}
           </div>
@@ -494,7 +487,7 @@ export default function NewWorkout() {
       })()}
 
       {/* Summary */}
-      <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #1e1e2e' }}>
+      <div style={{ border: '1px solid #222222' }}>
         {[
           { label: 'Focus', value: FOCUS_OPTIONS.find(f => f.id === config.focus)?.label || config.customFocus },
           { label: 'Location', value: LOCATION_OPTIONS.find(l => l.id === config.location)?.label },
@@ -507,47 +500,45 @@ export default function NewWorkout() {
         ].filter(Boolean).map((row, i, arr) => (
           <div
             key={i}
-            className="flex items-start gap-3 px-4 py-3"
             style={{
-              background: '#111118',
-              borderBottom: i < arr.length - 1 ? '1px solid #1e1e2e' : 'none',
+              display: 'flex', alignItems: 'start', gap: 12, padding: '12px 16px',
+              background: '#111111',
+              borderBottom: i < arr.length - 1 ? '1px solid #222222' : 'none',
             }}
           >
-            <span className="text-xs font-semibold w-20 flex-shrink-0 pt-0.5" style={{ color: '#475569', letterSpacing: '0.03em' }}>
-              {row.label.toUpperCase()}
+            <span style={{
+              fontFamily: "'Inter', sans-serif", fontSize: 10, fontWeight: 500,
+              letterSpacing: 2, color: '#555555', textTransform: 'uppercase',
+              width: 80, flexShrink: 0, paddingTop: 2,
+            }}>
+              {row.label}
             </span>
-            <span className="text-sm font-medium" style={{ color: '#f8fafc' }}>{row.value}</span>
+            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 500, color: '#FFFFFF' }}>
+              {row.value}
+            </span>
           </div>
         ))}
       </div>
 
       <button
         onClick={generate}
-        className="w-full py-4 rounded-full font-bold text-base btn-press"
+        className="btn-press"
         style={{
-          background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-          color: '#fff',
-          fontSize: 17,
+          width: '100%', padding: '18px', border: 'none', cursor: 'pointer',
+          background: '#E8FF00', color: '#000000',
+          fontFamily: "'Oswald', sans-serif", fontWeight: 700, fontSize: 15,
+          letterSpacing: 3, textTransform: 'uppercase',
         }}
       >
-        Generate My Workout ⚡
+        Generate Workout →
       </button>
     </div>,
   ];
 
-  const canGoNext = [
-    () => config.focus && (config.focus !== 'custom' || config.customFocus.trim()),
-    () => config.location,
-    () => config.duration,
-    () => config.energy,
-    () => true,
-    () => true,
-  ][step]?.() ?? true;
-
   return (
-    <div className="flex flex-col min-h-screen max-w-[430px] mx-auto" style={{ background: '#0a0a0f' }}>
+    <div className="flex flex-col min-h-screen max-w-[430px] mx-auto" style={{ background: '#0A0A0A' }}>
       <StepHeader step={step} total={totalSteps} onBack={handleBack} />
-      <div className="flex-1 px-5 py-5 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto" style={{ padding: '20px 24px' }}>
         <div className="animate-fade-in">{steps[step]}</div>
       </div>
     </div>

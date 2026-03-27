@@ -5,13 +5,13 @@ const PLATES_KG = [25, 20, 15, 10, 5, 2.5, 1.25];
 const PLATES_LBS = [45, 35, 25, 10, 5, 2.5];
 const PLATE_COLORS = {
   25: '#ef4444', 20: '#3b82f6', 15: '#f59e0b', 10: '#10b981',
-  5: '#f1f5f9', 2.5: '#2a2a3a', 1.25: '#8b5cf6',
+  5: '#f1f5f9', 2.5: '#555555', 1.25: '#E8FF00',
   45: '#ef4444', 35: '#3b82f6', 35: '#f59e0b', 10: '#10b981',
 };
 
 const PLATE_COLOR_MAP = {
   25: '#ef4444', 20: '#3b82f6', 15: '#f59e0b', 10: '#10b981',
-  5: '#e2e8f0', 2.5: '#555555', 1.25: '#8b5cf6',
+  5: '#e2e8f0', 2.5: '#555555', 1.25: '#E8FF00',
   45: '#ef4444', 35: '#3b82f6', 'other': '#888888'
 };
 
@@ -80,7 +80,7 @@ export default function PlateCalculator({ onClose }) {
               style={{ color: tab === t ? '#818cf8' : '#555555' }}>
               {t === 'plates' ? 'Plate Calculator' : 'Warm-up Calculator'}
               {tab === t && (
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-0.5 rounded-full" style={{ background: '#6366f1' }} />
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-0.5 rounded-full" style={{ background: '#E8FF00' }} />
               )}
             </button>
           ))}
@@ -94,7 +94,7 @@ export default function PlateCalculator({ onClose }) {
               style={{
                 background: unit === u ? 'rgba(99,102,241,0.15)' : '#111111',
                 color: unit === u ? '#818cf8' : '#888888',
-                border: `1px solid ${unit === u ? '#6366f150' : '#222222'}`,
+                border: `1px solid ${unit === u ? '#E8FF0050' : '#222222'}`,
               }}>
               {u}
             </button>
@@ -130,7 +130,7 @@ export default function PlateCalculator({ onClose }) {
                     style={{
                       background: barbellWeight === w ? 'rgba(99,102,241,0.15)' : '#111111',
                       color: barbellWeight === w ? '#818cf8' : '#888888',
-                      border: `1px solid ${barbellWeight === w ? '#6366f150' : '#222222'}`,
+                      border: `1px solid ${barbellWeight === w ? '#E8FF0050' : '#222222'}`,
                     }}>
                     {w === 'custom' ? (
                       <input type="number" className="w-full text-center bg-transparent outline-none text-sm"
@@ -194,7 +194,7 @@ export default function PlateCalculator({ onClose }) {
                     style={{
                       background: warmupSets === n ? 'rgba(99,102,241,0.15)' : '#111111',
                       color: warmupSets === n ? '#818cf8' : '#888888',
-                      border: `1px solid ${warmupSets === n ? '#6366f150' : '#222222'}`,
+                      border: `1px solid ${warmupSets === n ? '#E8FF0050' : '#222222'}`,
                     }}>
                     {n}
                   </button>
@@ -216,7 +216,7 @@ export default function PlateCalculator({ onClose }) {
                     </div>
                   </div>
                 ))}
-                <div className="flex items-center gap-3 p-3 rounded-none" style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid #6366f140' }}>
+                <div className="flex items-center gap-3 p-3 rounded-none" style={{ background: 'rgba(232,255,0,0.1)', border: '1px solid #E8FF0040' }}>
                   <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
                     style={{ background: 'rgba(99,102,241,0.2)', color: '#818cf8' }}>W</div>
                   <span className="font-semibold text-sm tabular-nums" style={{ color: '#818cf8' }}>{target}{unit} — Working sets</span>
