@@ -1,51 +1,45 @@
-// Spark Trainer Design System — Single source of truth for all visual tokens
+// Pocket Trainer Design System — Editorial Sport
 export const colors = {
   bg: {
-    primary:  '#0a0a0f',
-    secondary:'#111118',
-    tertiary: '#1a1a24',
-    overlay:  '#22222e',
-    hover:    '#2a2a38',
+    primary:   '#0A0A0A',
+    raised:    '#111111',
+    border:    '#222222',
   },
   accent: {
-    primary:   '#6366f1',
-    secondary: '#8b5cf6',
-    success:   '#10b981',
-    warning:   '#f59e0b',
-    danger:    '#ef4444',
-    info:      '#3b82f6',
-    orange:    '#f97316',
+    primary:   '#E8FF00',
+    on:        '#000000',
+    success:   '#22C55E',
+    warning:   '#F59E0B',
+    danger:    '#EF4444',
+    info:      '#3B82F6',
   },
   text: {
-    primary:   '#f8fafc',
-    secondary: '#94a3b8',
-    muted:     '#475569',
-    inverse:   '#0a0a0f',
+    primary:   '#FFFFFF',
+    secondary: '#888888',
+    muted:     '#555555',
+    inverse:   '#000000',
   },
   border: {
-    subtle:  '#1e1e2e',
-    default: '#2d2d3d',
-    strong:  '#3d3d50',
-  },
-  recovery: {
-    peak:    '#6366f1',
-    good:    '#10b981',
-    caution: '#f59e0b',
-    rest:    '#ef4444',
+    subtle:  '#1A1A1A',
+    default: '#222222',
+    strong:  '#333333',
   },
 };
 
+export const fonts = {
+  display: "'Oswald', sans-serif",
+  body:    "'Inter', sans-serif",
+};
+
 export const radius = {
-  sm:   '0.5rem',
-  md:   '0.875rem',
-  lg:   '1.25rem',
-  xl:   '1.5rem',
+  none: '0px',
+  sm:   '8px',
   full: '9999px',
 };
 
 export const spacing = {
-  screenPadding: '1.25rem',
-  cardPadding:   '1.25rem',
-  cardGap:       '0.75rem',
-  sectionGap:    '1.5rem',
+  screenPadding: '24px',
+  cardPadding:   '16px',
+  cellGap:       '1px',
+  sectionGap:    '24px',
 };
