@@ -65,34 +65,34 @@ export default function LocalStorageMigration({ onDone }) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', padding: '0 0 24px', zIndex: 200 }}>
-      <div style={{ background: '#1e1e2a', border: '1px solid #2a2a3a', borderRadius: 16, padding: 24, width: '100%', maxWidth: 420, margin: '0 16px' }}>
+      <div style={{ background: '#111111', border: '1px solid #222222', borderRadius: 0, padding: 24, width: '100%', maxWidth: 420, margin: '0 16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ background: '#1d4ed8', borderRadius: 8, padding: 8 }}>
-              <Upload size={18} color="#fff" />
+            <div style={{ background: '#E8FF00', borderRadius: 0, padding: 8 }}>
+              <Upload size={18} color="#0A0A0A" />
             </div>
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#f1f5f9' }}>Import existing data?</h3>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#FFFFFF' }}>Import existing data?</h3>
           </div>
-          <button onClick={() => dismiss(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: 4 }}>
+          <button onClick={() => dismiss(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#555555', padding: 4 }}>
             <X size={18} />
           </button>
         </div>
 
-        <p style={{ fontSize: 14, color: '#94a3b8', lineHeight: 1.6, margin: '0 0 20px' }}>
+        <p style={{ fontSize: 14, color: '#888888', lineHeight: 1.6, margin: '0 0 20px' }}>
           We found existing workout data on this device. Would you like to import it to your account so you can access it from any device?
         </p>
 
         <div style={{ display: 'flex', gap: 10 }}>
           <button
             onClick={() => dismiss(false)}
-            style={{ flex: 1, padding: '11px', background: '#0f0f14', border: '1px solid #2a2a3a', borderRadius: 10, color: '#94a3b8', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+            style={{ flex: 1, padding: '11px', background: '#0A0A0A', border: '1px solid #222222', borderRadius: 0, color: '#888888', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
           >
             No thanks
           </button>
           <button
             onClick={doImport}
             disabled={importing}
-            style={{ flex: 2, padding: '11px', background: importing ? '#1d4ed8' : '#3b82f6', border: 'none', borderRadius: 10, color: '#fff', fontSize: 14, fontWeight: 600, cursor: importing ? 'not-allowed' : 'pointer', opacity: importing ? 0.7 : 1 }}
+            style={{ flex: 2, padding: '11px', background: importing ? '#c4d900' : '#E8FF00', border: 'none', borderRadius: 0, color: '#0A0A0A', fontSize: 14, fontWeight: 600, cursor: importing ? 'not-allowed' : 'pointer', opacity: importing ? 0.7 : 1 }}
           >
             {importing ? 'Importing…' : 'Yes, import my data'}
           </button>

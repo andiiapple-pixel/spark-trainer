@@ -185,7 +185,7 @@ function PasswordTab() {
     return s;
   }
   const s = getStrength(form.next);
-  const colors = ['#222222','#EF4444','#f97316','#E8FF00','#10b981'];
+  const colors = ['#222222','#EF4444','#E8FF00','#E8FF00','#10b981'];
   const labels = ['','Weak','Fair','Good','Strong'];
 
   async function handleSubmit(e) {
