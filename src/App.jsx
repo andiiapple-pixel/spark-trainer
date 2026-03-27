@@ -33,8 +33,8 @@ const NO_BOTTOM_BAR = ['/workout/active'];
 
 function PageLoader() {
   return (
-    <div className="flex items-center justify-center min-h-screen" style={{ background: '#0f0f14' }}>
-      <div className="w-8 h-8 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
+    <div className="flex items-center justify-center min-h-screen" style={{ background: '#0A0A0A' }}>
+      <div className="w-8 h-8 border-2 animate-spin" style={{ borderColor: '#222222', borderTopColor: '#E8FF00' }} />
     </div>
   );
 }
@@ -43,7 +43,7 @@ function Layout({ children }) {
   const location = useLocation();
   const showBar = !NO_BOTTOM_BAR.some(p => location.pathname.startsWith(p));
   return (
-    <div className="flex flex-col min-h-screen" style={{ background: '#0f0f14' }}>
+    <div className="flex flex-col min-h-screen" style={{ background: '#0A0A0A' }}>
       <div className="flex-1">{children}</div>
       {showBar && <BottomBar />}
     </div>
@@ -77,7 +77,7 @@ function AppShell() {
 
   if (!hasProfile) {
     return (
-      <div style={{ background: '#0f0f14', minHeight: '100vh' }}>
+      <div style={{ background: '#0A0A0A', minHeight: '100vh' }}>
         <Suspense fallback={<PageLoader />}>
           <Onboarding onComplete={() => setHasProfile(true)} />
         </Suspense>
