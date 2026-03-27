@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, TrendingUp, MessageCircle } from 'lucide-react';
+import { Home, Zap, MessageSquare } from 'lucide-react';
 
 export default function BottomBar() {
   const navigate = useNavigate();
@@ -7,52 +7,58 @@ export default function BottomBar() {
 
   const tabs = [
     { path: '/', icon: Home, label: 'Home' },
-    { path: '/progress', icon: TrendingUp, label: 'Progress' },
-    { path: '/coach', icon: MessageCircle, label: 'Coach' },
+    { path: '/new-workout', icon: Zap, label: 'Train' },
+    { path: '/coach', icon: MessageSquare, label: 'Coach' },
   ];
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center">
       <div
-        className="w-full max-w-[430px]"
         style={{
-          background: 'rgba(10,10,15,0.92)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          borderTop: '1px solid #1e1e2e',
+          width: '100%',
+          maxWidth: 430,
+          background: '#0A0A0A',
+          borderTop: '1px solid #222222',
         }}
       >
-        <div className="flex">
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-around',
+            alignItems: 'center',
+            padding: '12px 16px',
+          }}
+        >
           {tabs.map(({ path, icon: Icon, label }) => {
             const active = location.pathname === path;
             return (
               <button
                 key={path}
                 onClick={() => navigate(path)}
-                className="flex-1 flex flex-col items-center gap-1 py-3 btn-press relative"
-                style={{ minHeight: 56 }}
+                className="btn-press"
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  background: 'transparent',
+                  color: active ? '#E8FF00' : '#555555',
+                  borderRadius: 8,
+                  paddingLeft: 16,
+                  paddingRight: 16,
+                  paddingTop: 6,
+                  paddingBottom: 6,
+                  fontWeight: 500,
+                  fontSize: 10,
+                  letterSpacing: '0.15em',
+                  textTransform: 'uppercase',
+                  fontFamily: "'Inter', sans-serif",
+                  gap: 4,
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
               >
-                {active && (
-                  <div
-                    className="absolute top-0 left-1/2 -translate-x-1/2 rounded-full"
-                    style={{ width: 20, height: 2, background: '#6366f1' }}
-                  />
-                )}
-                <Icon
-                  size={22}
-                  strokeWidth={active ? 2 : 1.5}
-                  style={{ color: active ? '#818cf8' : '#475569' }}
-                />
-                <span
-                  className="font-medium"
-                  style={{
-                    fontSize: 10,
-                    letterSpacing: '0.04em',
-                    color: active ? '#818cf8' : '#475569',
-                  }}
-                >
-                  {label}
-                </span>
+                <Icon size={20} strokeWidth={active ? 2.5 : 1.5} />
+                <span>{label}</span>
               </button>
             );
           })}
