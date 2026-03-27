@@ -103,6 +103,33 @@ const GYM_EQUIPMENT_LIST = [
   'Rowing machine', 'Treadmill', 'Bike', 'Trap bar',
 ];
 
+// Editorial design tokens
+const labelStyle = {
+  display: 'block',
+  fontFamily: "'Inter', sans-serif",
+  fontSize: 11,
+  fontWeight: 500,
+  textTransform: 'uppercase',
+  letterSpacing: '2px',
+  color: '#555555',
+  marginBottom: 8,
+};
+
+const inputStyleBase = {
+  width: '100%',
+  height: 48,
+  padding: '0 16px',
+  background: '#111111',
+  border: '1px solid #222222',
+  borderRadius: 0,
+  color: '#FFFFFF',
+  fontFamily: "'Inter', sans-serif",
+  fontSize: 15,
+  fontWeight: 400,
+  outline: 'none',
+  boxSizing: 'border-box',
+};
+
 function GymProfiles() {
   const [profiles, setProfiles] = useState([]);
   const [creating, setCreating] = useState(false);
@@ -154,19 +181,34 @@ function GymProfiles() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-2">
-        <label className="text-xs font-medium" style={{ color: '#94a3b8' }}>GYM PROFILES</label>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+        <label style={labelStyle}>GYM PROFILES</label>
         <button
           onClick={() => setCreating(c => !c)}
-          className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg btn-press"
-          style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8' }}
+          className="btn-press"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 11,
+            fontWeight: 500,
+            textTransform: 'uppercase',
+            letterSpacing: '1px',
+            padding: '8px 12px',
+            background: 'transparent',
+            border: '1px solid #222222',
+            borderRadius: 0,
+            color: '#E8FF00',
+            cursor: 'pointer',
+          }}
         >
-          <Plus size={12} /> New
+          <Plus size={12} /> NEW
         </button>
       </div>
 
       {profiles.length === 0 && !creating && (
-        <p className="text-xs py-3 text-center" style={{ color: '#475569' }}>
+        <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#555555', textAlign: 'center', padding: '16px 0' }}>
           No gym profiles yet. Create one to save your equipment setup.
         </p>
       )}
@@ -174,72 +216,135 @@ function GymProfiles() {
       {profiles.map(p => (
         <div
           key={p.id}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-2xl mb-2"
-          style={{ background: '#111118', border: `1px solid ${p.is_default ? '#6366f160' : '#2d2d3d'}` }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            padding: '12px 16px',
+            background: 'transparent',
+            border: `1px solid ${p.is_default ? '#E8FF00' : '#222222'}`,
+            borderRadius: 0,
+            marginBottom: 8,
+          }}
         >
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium truncate" style={{ color: '#f8fafc' }}>{p.name}</div>
-            <div className="text-xs truncate" style={{ color: '#475569' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 500, color: '#FFFFFF', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {p.name}
+            </div>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: '#555555', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {(p.equipment_list || []).slice(0, 4).join(', ')}{(p.equipment_list?.length || 0) > 4 ? ` +${p.equipment_list.length - 4}` : ''}
             </div>
           </div>
           {!p.is_default && (
             <button
               onClick={() => setDefault(p.id)}
-              className="text-xs px-2 py-1 rounded-lg"
-              style={{ background: '#2d2d3d', color: '#475569' }}
+              style={{
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 11,
+                fontWeight: 500,
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+                padding: '6px 10px',
+                background: 'transparent',
+                border: '1px solid #222222',
+                borderRadius: 0,
+                color: '#888888',
+                cursor: 'pointer',
+              }}
             >
               Set default
             </button>
           )}
           {p.is_default && (
-            <span className="text-xs px-2 py-1 rounded-lg" style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8' }}>Default</span>
+            <span style={{
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 11,
+              fontWeight: 500,
+              textTransform: 'uppercase',
+              letterSpacing: '1px',
+              padding: '6px 10px',
+              background: '#E8FF00',
+              color: '#000000',
+              borderRadius: 0,
+            }}>
+              Default
+            </span>
           )}
-          <button onClick={() => deleteProfile(p.id)} style={{ color: '#ef444480' }}>
+          <button onClick={() => deleteProfile(p.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444', padding: 4 }}>
             <Trash2 size={14} />
           </button>
         </div>
       ))}
 
       {creating && (
-        <div className="flex flex-col gap-3 p-3 rounded-2xl animate-fade-in" style={{ background: '#111118', border: '1px solid #2d2d3d' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 16, background: '#111111', border: '1px solid #222222', borderRadius: 0 }}>
           <input
             autoFocus
             placeholder="Profile name (e.g. Main Gym)"
             value={newName}
             onChange={e => setNewName(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-lg text-sm outline-none"
-            style={{ background: '#0f0f14', border: '1px solid #2d2d3d', color: '#f8fafc' }}
+            style={inputStyleBase}
           />
-          <div className="flex flex-wrap gap-1.5">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {GYM_EQUIPMENT_LIST.map(item => (
               <button
                 key={item}
                 onClick={() => toggleEquip(item)}
-                className="px-2.5 py-1 rounded-lg text-xs btn-press"
+                className="btn-press"
                 style={{
-                  background: newEquipment.includes(item) ? 'rgba(99,102,241,0.12)' : '#2d2d3d',
-                  color: newEquipment.includes(item) ? '#818cf8' : '#475569',
-                  border: `1px solid ${newEquipment.includes(item) ? '#6366f160' : 'transparent'}`,
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: 12,
+                  fontWeight: 400,
+                  padding: '6px 12px',
+                  background: newEquipment.includes(item) ? '#E8FF00' : 'transparent',
+                  color: newEquipment.includes(item) ? '#000000' : '#888888',
+                  border: `1px solid ${newEquipment.includes(item) ? '#E8FF00' : '#222222'}`,
+                  borderRadius: 0,
+                  cursor: 'pointer',
                 }}
               >
                 {item}
               </button>
             ))}
           </div>
-          <div className="flex gap-2">
+          <div style={{ display: 'flex', gap: 8 }}>
             <button
               onClick={createProfile}
               disabled={saving || !newName.trim()}
-              className="flex-1 py-2 rounded-lg text-sm font-semibold btn-press"
-              style={{ background: '#6366f1', color: '#fff', opacity: saving ? 0.7 : 1 }}
+              className="btn-press"
+              style={{
+                flex: 1,
+                height: 48,
+                fontFamily: "'Oswald', sans-serif",
+                fontSize: 14,
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                background: '#E8FF00',
+                color: '#000000',
+                border: 'none',
+                borderRadius: 0,
+                cursor: 'pointer',
+                opacity: saving ? 0.7 : 1,
+              }}
             >
-              {saving ? 'Saving…' : 'Save Profile'}
+              {saving ? 'SAVING...' : 'SAVE PROFILE'}
             </button>
             <button
               onClick={() => { setCreating(false); setNewName(''); setNewEquipment([]); }}
-              className="px-4 py-2 rounded-lg text-sm btn-press"
-              style={{ background: '#2d2d3d', color: '#475569' }}
+              className="btn-press"
+              style={{
+                padding: '0 20px',
+                height: 48,
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 13,
+                fontWeight: 500,
+                background: 'transparent',
+                border: '1px solid #222222',
+                borderRadius: 0,
+                color: '#888888',
+                cursor: 'pointer',
+              }}
             >
               Cancel
             </button>
@@ -310,31 +415,30 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div className="flex flex-col min-h-screen max-w-[430px] mx-auto pb-8">
-        <ScreenHeader title="My Profile" />
-        <div className="px-4 pt-8 flex justify-center">
-          <p style={{ color: '#475569', fontSize: 14 }}>Loading profile…</p>
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', maxWidth: 430, margin: '0 auto', paddingBottom: 32, background: '#0A0A0A' }}>
+        <ScreenHeader title="Profile" />
+        <div style={{ padding: '32px 20px', display: 'flex', justifyContent: 'center' }}>
+          <p style={{ fontFamily: "'Inter', sans-serif", color: '#555555', fontSize: 14 }}>Loading profile...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-screen max-w-[430px] mx-auto pb-8" style={{ background: '#0a0a0f' }}>
-      <ScreenHeader title="My Profile" />
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', maxWidth: 430, margin: '0 auto', paddingBottom: 32, background: '#0A0A0A' }}>
+      <ScreenHeader title="Profile" />
 
-      <div className="px-5 flex flex-col gap-4">
+      <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: 24 }}>
         {/* Basic info */}
-        <div className="flex flex-col gap-3">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {fields.map(f => (
             <div key={f.field}>
-              <label className="text-xs font-medium mb-1 block" style={{ color: '#94a3b8' }}>{f.label}</label>
+              <label style={labelStyle}>{f.label}</label>
               <input
                 type={f.type}
                 value={profile[f.field] || ''}
                 onChange={e => update(f.field, e.target.value)}
-                className="w-full px-4 py-3 rounded-2xl outline-none text-sm"
-                style={{ background: '#111118', border: '1px solid #2d2d3d', color: '#f8fafc' }}
+                style={inputStyleBase}
               />
             </div>
           ))}
@@ -342,17 +446,24 @@ export default function Profile() {
 
         {/* Sex */}
         <div>
-          <label className="text-xs font-medium mb-2 block" style={{ color: '#94a3b8' }}>Sex</label>
-          <div className="flex gap-2">
+          <label style={labelStyle}>Sex</label>
+          <div style={{ display: 'flex', gap: 8 }}>
             {['Male', 'Female', 'Other'].map(s => (
               <button
                 key={s}
                 onClick={() => update('sex', s)}
-                className="flex-1 py-2.5 rounded-2xl text-sm font-medium btn-press"
+                className="btn-press"
                 style={{
-                  background: profile.sex === s ? '#6366f1' : '#111118',
-                  border: `1px solid ${profile.sex === s ? '#6366f1' : '#2d2d3d'}`,
-                  color: profile.sex === s ? '#fff' : '#94a3b8',
+                  flex: 1,
+                  height: 48,
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: 14,
+                  fontWeight: 500,
+                  background: profile.sex === s ? '#E8FF00' : 'transparent',
+                  border: `1px solid ${profile.sex === s ? '#E8FF00' : '#222222'}`,
+                  borderRadius: 0,
+                  color: profile.sex === s ? '#000000' : '#888888',
+                  cursor: 'pointer',
                 }}
               >
                 {s}
@@ -363,21 +474,33 @@ export default function Profile() {
 
         {/* Fitness Goal */}
         <div>
-          <label className="text-xs font-medium mb-2 block" style={{ color: '#94a3b8' }}>Fitness goal</label>
-          <div className="flex flex-col gap-2">
+          <label style={labelStyle}>Fitness Goal</label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {GOALS.map(g => (
               <button
                 key={g.id}
                 onClick={() => update('goal', g.id)}
-                className="flex items-center gap-3 px-4 py-3 rounded-2xl text-left btn-press"
+                className="btn-press"
                 style={{
-                  background: profile.goal === g.id ? 'rgba(99,102,241,0.12)' : '#111118',
-                  border: `1px solid ${profile.goal === g.id ? '#6366f1' : '#2d2d3d'}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: '14px 16px',
+                  textAlign: 'left',
+                  background: profile.goal === g.id ? '#E8FF00' : 'transparent',
+                  border: `1px solid ${profile.goal === g.id ? '#E8FF00' : '#222222'}`,
+                  borderRadius: 0,
+                  cursor: 'pointer',
                 }}
               >
-                <span>{g.emoji}</span>
-                <span className="text-sm font-medium" style={{ color: '#f8fafc' }}>{g.label}</span>
-                {profile.goal === g.id && <Check size={15} className="ml-auto" style={{ color: '#6366f1', flexShrink: 0 }} />}
+                <span style={{ fontSize: 18 }}>{g.emoji}</span>
+                <span style={{
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: profile.goal === g.id ? '#000000' : '#FFFFFF',
+                }}>{g.label}</span>
+                {profile.goal === g.id && <Check size={15} style={{ marginLeft: 'auto', color: '#000000', flexShrink: 0 }} />}
               </button>
             ))}
           </div>
@@ -385,23 +508,39 @@ export default function Profile() {
 
         {/* Experience Level */}
         <div>
-          <label className="text-xs font-medium mb-2 block" style={{ color: '#94a3b8' }}>Training experience</label>
-          <div className="flex flex-col gap-2">
+          <label style={labelStyle}>Training Experience</label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {EXPERIENCE_LEVELS.map(e => (
               <button
                 key={e.id}
                 onClick={() => update('experience', e.id)}
-                className="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left btn-press"
+                className="btn-press"
                 style={{
-                  background: profile.experience === e.id ? 'rgba(99,102,241,0.12)' : '#111118',
-                  border: `1px solid ${profile.experience === e.id ? '#6366f1' : '#2d2d3d'}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: '14px 16px',
+                  textAlign: 'left',
+                  background: profile.experience === e.id ? '#E8FF00' : 'transparent',
+                  border: `1px solid ${profile.experience === e.id ? '#E8FF00' : '#222222'}`,
+                  borderRadius: 0,
+                  cursor: 'pointer',
                 }}
               >
-                <div className="flex-1">
-                  <div className="text-sm font-medium" style={{ color: '#f8fafc' }}>{e.label}</div>
-                  <div className="text-xs" style={{ color: '#475569' }}>{e.sub}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: 14,
+                    fontWeight: 500,
+                    color: profile.experience === e.id ? '#000000' : '#FFFFFF',
+                  }}>{e.label}</div>
+                  <div style={{
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: 12,
+                    color: profile.experience === e.id ? '#000000' : '#555555',
+                  }}>{e.sub}</div>
                 </div>
-                {profile.experience === e.id && <Check size={15} style={{ color: '#6366f1', flexShrink: 0 }} />}
+                {profile.experience === e.id && <Check size={15} style={{ color: '#000000', flexShrink: 0 }} />}
               </button>
             ))}
           </div>
@@ -409,24 +548,40 @@ export default function Profile() {
 
         {/* Equipment */}
         <div>
-          <label className="text-xs font-medium mb-2 block" style={{ color: '#94a3b8' }}>Equipment access</label>
-          <div className="flex flex-col gap-2">
+          <label style={labelStyle}>Equipment Access</label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {EQUIPMENT_OPTIONS.map(e => (
               <button
                 key={e.id}
                 onClick={() => update('equipment', e.id)}
-                className="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left btn-press"
+                className="btn-press"
                 style={{
-                  background: profile.equipment === e.id ? 'rgba(99,102,241,0.12)' : '#111118',
-                  border: `1px solid ${profile.equipment === e.id ? '#6366f1' : '#2d2d3d'}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: '14px 16px',
+                  textAlign: 'left',
+                  background: profile.equipment === e.id ? '#E8FF00' : 'transparent',
+                  border: `1px solid ${profile.equipment === e.id ? '#E8FF00' : '#222222'}`,
+                  borderRadius: 0,
+                  cursor: 'pointer',
                 }}
               >
-                <span className="text-lg">{e.emoji}</span>
-                <div className="flex-1">
-                  <div className="text-sm font-medium" style={{ color: '#f8fafc' }}>{e.label}</div>
-                  <div className="text-xs" style={{ color: '#475569' }}>{e.sub}</div>
+                <span style={{ fontSize: 18 }}>{e.emoji}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: 14,
+                    fontWeight: 500,
+                    color: profile.equipment === e.id ? '#000000' : '#FFFFFF',
+                  }}>{e.label}</div>
+                  <div style={{
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: 12,
+                    color: profile.equipment === e.id ? '#000000' : '#555555',
+                  }}>{e.sub}</div>
                 </div>
-                {profile.equipment === e.id && <Check size={15} style={{ color: '#6366f1', flexShrink: 0 }} />}
+                {profile.equipment === e.id && <Check size={15} style={{ color: '#000000', flexShrink: 0 }} />}
               </button>
             ))}
           </div>
@@ -437,17 +592,24 @@ export default function Profile() {
 
         {/* Training days */}
         <div>
-          <label className="text-xs font-medium mb-2 block" style={{ color: '#94a3b8' }}>Training days per week</label>
-          <div className="flex gap-2">
+          <label style={labelStyle}>Training Days Per Week</label>
+          <div style={{ display: 'flex', gap: 8 }}>
             {[2, 3, 4, 5, 6].map(d => (
               <button
                 key={d}
                 onClick={() => update('daysPerWeek', d)}
-                className="flex-1 py-3 rounded-2xl font-bold text-base btn-press"
+                className="btn-press"
                 style={{
-                  background: profile.daysPerWeek === d ? '#6366f1' : '#111118',
-                  border: `1px solid ${profile.daysPerWeek === d ? '#6366f1' : '#2d2d3d'}`,
-                  color: profile.daysPerWeek === d ? '#fff' : '#94a3b8',
+                  flex: 1,
+                  height: 48,
+                  fontFamily: "'Oswald', sans-serif",
+                  fontSize: 18,
+                  fontWeight: 700,
+                  background: profile.daysPerWeek === d ? '#E8FF00' : 'transparent',
+                  border: `1px solid ${profile.daysPerWeek === d ? '#E8FF00' : '#222222'}`,
+                  borderRadius: 0,
+                  color: profile.daysPerWeek === d ? '#000000' : '#888888',
+                  cursor: 'pointer',
                 }}
               >
                 {d}
@@ -458,17 +620,23 @@ export default function Profile() {
 
         {/* Session length */}
         <div>
-          <label className="text-xs font-medium mb-2 block" style={{ color: '#94a3b8' }}>Preferred session length</label>
-          <div className="grid grid-cols-5 gap-2">
+          <label style={labelStyle}>Preferred Session Length</label>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
             {[15, 30, 45, 60, 90].map(mins => (
               <button
                 key={mins}
                 onClick={() => update('sessionLength', mins)}
-                className="py-3 rounded-2xl font-medium text-xs btn-press"
+                className="btn-press"
                 style={{
-                  background: profile.sessionLength === mins ? '#6366f1' : '#111118',
-                  border: `1px solid ${profile.sessionLength === mins ? '#6366f1' : '#2d2d3d'}`,
-                  color: profile.sessionLength === mins ? '#fff' : '#94a3b8',
+                  height: 48,
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: 13,
+                  fontWeight: 500,
+                  background: profile.sessionLength === mins ? '#E8FF00' : 'transparent',
+                  border: `1px solid ${profile.sessionLength === mins ? '#E8FF00' : '#222222'}`,
+                  borderRadius: 0,
+                  color: profile.sessionLength === mins ? '#000000' : '#888888',
+                  cursor: 'pointer',
                 }}
               >
                 {mins}m
@@ -480,23 +648,38 @@ export default function Profile() {
         {/* Injuries */}
         {parseInjuries(profile.injuries).length > 0 && (
           <div>
-            <label className="text-xs font-medium mb-2 block" style={{ color: '#94a3b8' }}>Standing injuries</label>
-            <div className="flex flex-wrap gap-2">
+            <label style={labelStyle}>Standing Injuries</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {parseInjuries(profile.injuries).map(inj => (
-                <span key={inj} className="px-3 py-1.5 rounded-full text-sm" style={{ background: '#7c3aed30', color: '#c4b5fd', border: '1px solid #7c3aed50' }}>
+                <span key={inj} style={{
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: 13,
+                  fontWeight: 400,
+                  padding: '8px 14px',
+                  background: 'transparent',
+                  color: '#EF4444',
+                  border: '1px solid #EF4444',
+                  borderRadius: 0,
+                }}>
                   {inj}
                 </span>
               ))}
             </div>
             {profile.injuryNotes && (
-              <p className="text-xs mt-2 italic" style={{ color: '#475569' }}>{profile.injuryNotes}</p>
+              <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: '#555555', marginTop: 8, fontStyle: 'italic' }}>{profile.injuryNotes}</p>
             )}
           </div>
         )}
 
         {/* Save */}
         {saveMsg && (
-          <p style={{ fontSize: 13, fontWeight: 600, color: saveMsg.type === 'success' ? '#10b981' : '#ef4444', textAlign: 'center' }}>
+          <p style={{
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 13,
+            fontWeight: 600,
+            color: saveMsg.type === 'success' ? '#10b981' : '#EF4444',
+            textAlign: 'center',
+          }}>
             {saveMsg.type === 'success' && <Check size={14} style={{ verticalAlign: 'middle', marginRight: 4 }} />}
             {saveMsg.text}
           </p>
@@ -504,18 +687,51 @@ export default function Profile() {
         <button
           onClick={save}
           disabled={saving}
-          className="w-full py-3.5 rounded-2xl font-semibold btn-press flex items-center justify-center gap-2"
-          style={{ background: saveMsg?.type === 'success' ? '#10b981' : '#6366f1', color: '#fff', opacity: saving ? 0.7 : 1 }}
+          className="btn-press"
+          style={{
+            width: '100%',
+            height: 52,
+            fontFamily: "'Oswald', sans-serif",
+            fontSize: 16,
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            background: saveMsg?.type === 'success' ? '#10b981' : '#E8FF00',
+            color: saveMsg?.type === 'success' ? '#FFFFFF' : '#000000',
+            border: 'none',
+            borderRadius: 0,
+            cursor: 'pointer',
+            opacity: saving ? 0.7 : 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+          }}
         >
-          {saving ? 'Saving…' : saveMsg?.type === 'success' ? <><Check size={18} /> Saved!</> : 'Save Changes'}
+          {saving ? 'SAVING...' : saveMsg?.type === 'success' ? <><Check size={18} /> SAVED!</> : 'SAVE CHANGES'}
         </button>
 
         {/* Danger zone */}
-        <div className="mt-2 pt-4" style={{ borderTop: '1px solid #1e1e2e' }}>
+        <div style={{ marginTop: 8, paddingTop: 20, borderTop: '1px solid #222222' }}>
           <button
             onClick={resetApp}
-            className="w-full py-3 rounded-2xl text-sm font-medium btn-press flex items-center justify-center gap-2"
-            style={{ background: '#111118', border: '1px solid #ef444430', color: '#ef4444' }}
+            className="btn-press"
+            style={{
+              width: '100%',
+              height: 48,
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 13,
+              fontWeight: 500,
+              background: 'transparent',
+              border: '1px solid #EF4444',
+              borderRadius: 0,
+              color: '#EF4444',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+            }}
           >
             <LogOut size={16} />
             Reset all data
