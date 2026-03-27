@@ -1,10 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Play, RefreshCw, Plus, ClipboardList, TrendingUp, Settings,
-  Flame, Dumbbell, BookOpen, X, ChevronRight, Zap,
-} from 'lucide-react';
-import { storage, getGreeting, getMotivationalLine, getWeeklyWorkoutCount, getCurrentStreak } from '../../utils/storage';
+import { X, Zap } from 'lucide-react';
+import { storage, getMotivationalLine, getWeeklyWorkoutCount, getCurrentStreak } from '../../utils/storage';
 import { useActiveWorkout } from '../../context/ActiveWorkoutContext';
 import RecoveryCheckin from '../recovery/RecoveryCheckin';
 import { generateDailyMessage } from '../../api/anthropic';
@@ -51,10 +48,6 @@ export default function Home() {
   const weeklyCount = getWeeklyWorkoutCount(history);
   const goalDays = profile?.daysPerWeek || 3;
   const motivational = getMotivationalLine(history);
-  const greeting = getGreeting();
-  const lastWorkoutDaysAgo = history[0]
-    ? Math.floor((Date.now() - new Date(history[0].savedAt).getTime()) / 86400000)
-    : null;
 
   function getNextProgrammeDay() {
     if (!programme) return null;
@@ -110,136 +103,275 @@ export default function Home() {
     }
   }
 
-  const mainCards = [
-    {
-      emoji: '⚡',
-      title: 'Start a Workout',
-      sub: 'One-off session, fully custom',
-      color: '#6366f1',
-      onClick: startNewWorkout,
-    },
-    programme && {
-      emoji: '🔁',
-      title: 'Continue Programme',
-      sub: programme.name || 'Active programme',
-      color: '#10b981',
-      onClick: () => navigate('/programme/continue'),
-    },
-    {
-      emoji: '📋',
-      title: 'Build a Programme',
-      sub: 'Multi-week structured plan',
-      color: '#f59e0b',
-      onClick: () => navigate('/programme/build'),
-    },
-    {
-      emoji: '📚',
-      title: 'Exercise Library',
-      sub: '200+ exercises with form guides',
-      color: '#8b5cf6',
-      onClick: () => navigate('/exercises'),
-    },
-    {
-      emoji: '📖',
-      title: 'Workout History',
-      sub: 'Past sessions & results',
-      color: '#06b6d4',
-      onClick: () => navigate('/history'),
-    },
-    {
-      emoji: '⚙️',
-      title: 'My Profile',
-      sub: 'Goals, equipment, preferences',
-      color: '#475569',
-      onClick: () => navigate('/profile'),
-    },
-  ].filter(Boolean);
+  const weekProgress = Math.min(weeklyCount / goalDays, 1);
+  const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase();
+
+  // Determine hero headline
+  let heroHeadline;
+  let heroContext = null;
+  if (hasActiveWorkout) {
+    heroHeadline = activeWkt?.session_name || activeWkt?.sessionConfig?.focus || 'YOUR WORKOUT';
+  } else if (programme && nextProg) {
+    heroContext = programme.name;
+    heroHeadline = nextProg.dayName;
+  } else {
+    heroHeadline = profile?.name || 'ATHLETE';
+  }
 
   return (
     <div
       className="flex flex-col min-h-screen max-w-[430px] mx-auto pb-24"
-      style={{ background: '#0a0a0f' }}
+      style={{ background: '#0A0A0A' }}
     >
-      {/* Header */}
-      <div className="px-5 pt-14 pb-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <h1 className="font-bold tracking-tight" style={{ color: '#f8fafc', fontSize: 24 }}>
-              {greeting}, {profile?.name || 'Athlete'}
-            </h1>
-            <p
-              className="mt-1 text-sm truncate"
-              style={{ color: '#94a3b8' }}
-            >
-              {dailyMessage || motivational}
-            </p>
-          </div>
-          {streak > 0 && (
-            <div
-              className="flex flex-col items-center px-3 py-2 rounded-2xl flex-shrink-0"
-              style={{ background: '#1a1109', border: '1px solid #f59e0b40' }}
-            >
-              <Flame size={16} style={{ color: '#f59e0b' }} />
-              <span className="font-bold text-lg leading-none mt-0.5" style={{ color: '#f59e0b' }}>{streak}</span>
-              <span style={{ fontSize: 9, color: '#94a3b8', letterSpacing: '0.05em', marginTop: 1 }}>STREAK</span>
-            </div>
-          )}
-        </div>
+      {/* 1. Top bar */}
+      <div className="flex items-center justify-between px-5 pt-14 pb-2">
+        <span style={{
+          fontFamily: "'Inter', sans-serif",
+          fontSize: 10,
+          fontWeight: 400,
+          textTransform: 'uppercase',
+          letterSpacing: 3,
+          color: '#555555',
+        }}>
+          {dateStr}
+        </span>
+        <button
+          onClick={() => navigate('/profile')}
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: '50%',
+            border: '1px solid #222222',
+            background: '#111111',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0,
+            cursor: 'pointer',
+          }}
+        >
+          <div style={{
+            width: 8,
+            height: 8,
+            borderRadius: '50%',
+            background: '#E8FF00',
+          }} />
+        </button>
+      </div>
 
-        {/* Stats row */}
-        <div className="flex gap-2 mt-4">
-          <div
-            className="flex-1 flex flex-col items-center py-3 rounded-2xl"
-            style={{ background: '#111118', border: '1px solid #1e1e2e' }}
-          >
-            <span className="font-bold" style={{ color: '#6366f1', fontSize: 20 }}>
-              {weeklyCount}<span style={{ fontSize: 13, color: '#475569' }}>/{goalDays}</span>
+      {/* 2. Hero headline */}
+      <div className="px-5" style={{ paddingTop: 24, paddingBottom: 20 }}>
+        {heroContext && (
+          <span style={{
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 10,
+            fontWeight: 500,
+            textTransform: 'uppercase',
+            letterSpacing: 2,
+            color: '#E8FF00',
+            display: 'block',
+            marginBottom: 8,
+          }}>
+            {heroContext}
+          </span>
+        )}
+        <h1 style={{
+          fontFamily: "'Oswald', sans-serif",
+          fontWeight: 700,
+          fontSize: 52,
+          lineHeight: 0.95,
+          textTransform: 'uppercase',
+          color: '#FFFFFF',
+          margin: 0,
+        }}>
+          {heroHeadline}
+        </h1>
+        <p style={{
+          fontFamily: "'Inter', sans-serif",
+          fontSize: 13,
+          fontWeight: 400,
+          color: '#888888',
+          marginTop: 12,
+          lineHeight: 1.5,
+        }}>
+          {dailyMessage || motivational}
+        </p>
+      </div>
+
+      {/* 3. Stat strip */}
+      <div className="px-5" style={{ marginBottom: 16 }}>
+        <div style={{
+          display: 'flex',
+          gap: 1,
+          background: '#222222',
+        }}>
+          {/* This week */}
+          <div style={{
+            flex: 1,
+            background: '#111111',
+            padding: '14px 0',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}>
+            <span style={{
+              fontFamily: "'Oswald', sans-serif",
+              fontWeight: 700,
+              fontSize: 24,
+              color: '#E8FF00',
+            }}>
+              {weeklyCount}<span style={{ color: '#555555', fontSize: 16 }}>/{goalDays}</span>
             </span>
-            <span style={{ fontSize: 10, color: '#475569', letterSpacing: '0.04em', marginTop: 2 }}>THIS WEEK</span>
-          </div>
-          <div
-            className="flex-1 flex flex-col items-center py-3 rounded-2xl"
-            style={{ background: '#111118', border: '1px solid #1e1e2e' }}
-          >
-            <span className="font-bold" style={{ color: '#10b981', fontSize: 20 }}>{history.length}</span>
-            <span style={{ fontSize: 10, color: '#475569', letterSpacing: '0.04em', marginTop: 2 }}>SESSIONS</span>
-          </div>
-          <div
-            className="flex-1 flex flex-col items-center py-3 rounded-2xl"
-            style={{ background: '#111118', border: '1px solid #1e1e2e' }}
-          >
-            <span className="font-bold" style={{ color: '#f8fafc', fontSize: 20 }}>
-              {lastWorkoutDaysAgo === null ? '—' : lastWorkoutDaysAgo === 0 ? 'Today' : `${lastWorkoutDaysAgo}d`}
+            <span style={{
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 9,
+              fontWeight: 400,
+              textTransform: 'uppercase',
+              letterSpacing: 2,
+              color: '#555555',
+              marginTop: 4,
+            }}>
+              THIS WEEK
             </span>
-            <span style={{ fontSize: 10, color: '#475569', letterSpacing: '0.04em', marginTop: 2 }}>LAST SESSION</span>
+          </div>
+          {/* Streak */}
+          <div style={{
+            flex: 1,
+            background: '#111111',
+            padding: '14px 0',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}>
+            <span style={{
+              fontFamily: "'Oswald', sans-serif",
+              fontWeight: 700,
+              fontSize: 24,
+              color: '#FFFFFF',
+            }}>
+              {streak}
+            </span>
+            <span style={{
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 9,
+              fontWeight: 400,
+              textTransform: 'uppercase',
+              letterSpacing: 2,
+              color: '#555555',
+              marginTop: 4,
+            }}>
+              STREAK
+            </span>
+          </div>
+          {/* Recovery */}
+          <div style={{
+            flex: 1,
+            background: '#111111',
+            padding: '14px 0',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}>
+            <span style={{
+              fontFamily: "'Oswald', sans-serif",
+              fontWeight: 700,
+              fontSize: 24,
+              color: '#FFFFFF',
+            }}>
+              &mdash;
+            </span>
+            <span style={{
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 9,
+              fontWeight: 400,
+              textTransform: 'uppercase',
+              letterSpacing: 2,
+              color: '#555555',
+              marginTop: 4,
+            }}>
+              RECOVERY
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Recovery check-in */}
-      <div className="px-5 mb-3">
+      {/* 4. Week progress bar */}
+      <div className="px-5" style={{ marginBottom: 20 }}>
+        <div style={{
+          height: 3,
+          background: '#111111',
+          width: '100%',
+        }}>
+          <div style={{
+            height: 3,
+            background: '#E8FF00',
+            width: `${weekProgress * 100}%`,
+            transition: 'width 0.3s ease',
+          }} />
+        </div>
+        <span style={{
+          fontFamily: "'Inter', sans-serif",
+          fontSize: 11,
+          color: '#555555',
+          marginTop: 6,
+          display: 'block',
+        }}>
+          {weeklyCount} of {goalDays} sessions this week
+        </span>
+      </div>
+
+      {/* 5. Recovery check-in */}
+      <div className="px-5" style={{ marginBottom: 16 }}>
         <RecoveryCheckin compact />
       </div>
 
-      {/* Deload suggestion banner */}
+      {/* 6. Deload suggestion */}
       {deloadMsg && (
-        <div className="px-5 mb-3">
-          <div
-            className="p-3 rounded-2xl flex items-start gap-3 animate-fade-in"
-            style={{ background: '#0f1f18', border: '1px solid #10b98140' }}
-          >
-            <span className="text-base flex-shrink-0 mt-0.5">🔄</span>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold mb-0.5" style={{ color: '#10b981', letterSpacing: '0.04em' }}>DELOAD SUGGESTION</p>
-              <p className="text-xs leading-relaxed" style={{ color: '#94a3b8' }}>{deloadMsg}</p>
+        <div className="px-5" style={{ marginBottom: 16 }}>
+          <div style={{
+            borderLeft: '3px solid #E8FF00',
+            padding: '12px 16px',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 12,
+          }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 10,
+                fontWeight: 500,
+                textTransform: 'uppercase',
+                letterSpacing: 1,
+                color: '#E8FF00',
+                margin: 0,
+                marginBottom: 4,
+              }}>
+                DELOAD SUGGESTION
+              </p>
+              <p style={{
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 12,
+                fontWeight: 400,
+                color: '#888888',
+                margin: 0,
+                lineHeight: 1.5,
+              }}>
+                {deloadMsg}
+              </p>
             </div>
             <button
               onClick={() => {
                 localStorage.setItem('spark_deload_dismissed', new Date().toDateString());
                 setDeloadDismissed(true);
               }}
-              className="btn-press flex-shrink-0"
-              style={{ color: '#475569' }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#555555',
+                cursor: 'pointer',
+                padding: 4,
+                flexShrink: 0,
+              }}
             >
               <X size={14} />
             </button>
@@ -247,103 +379,186 @@ export default function Home() {
         </div>
       )}
 
-      {/* Active workout banner */}
+      {/* 7. Active workout banner */}
       {hasActiveWorkout && (
-        <div className="px-5 mb-3">
-          <div
-            className="p-4 rounded-2xl animate-fade-in"
-            style={{
-              background: activeStatus === 'in_progress'
-                ? 'linear-gradient(135deg, rgba(99,102,241,0.15) 0%, rgba(139,92,246,0.15) 100%)'
-                : 'linear-gradient(135deg, rgba(139,92,246,0.12) 0%, rgba(99,102,241,0.12) 100%)',
-              border: `1px solid ${activeStatus === 'in_progress' ? '#6366f150' : '#8b5cf640'}`,
-            }}
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <div
-                className="w-2 h-2 rounded-full animate-pulse-slow"
-                style={{ background: activeStatus === 'in_progress' ? '#10b981' : '#8b5cf6' }}
-              />
-              <span className="text-xs font-semibold" style={{
-                color: activeStatus === 'in_progress' ? '#6ee7b7' : '#c4b5fd',
-                letterSpacing: '0.05em',
+        <div className="px-5" style={{ marginBottom: 16 }}>
+          <div style={{
+            background: '#E8FF00',
+            padding: '20px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <div style={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: '#000000',
+              }} />
+              <span style={{
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 10,
+                fontWeight: 500,
+                textTransform: 'uppercase',
+                letterSpacing: 2,
+                color: '#000000',
               }}>
-                {activeStatus === 'in_progress' ? 'IN PROGRESS' : 'WORKOUT READY'}
+                IN PROGRESS
               </span>
             </div>
-            <div className="font-bold text-base mb-0.5" style={{ color: '#f8fafc' }}>
+            <div style={{
+              fontFamily: "'Oswald', sans-serif",
+              fontWeight: 700,
+              fontSize: 28,
+              textTransform: 'uppercase',
+              color: '#000000',
+              marginBottom: 4,
+            }}>
               {activeWkt?.session_name || activeWkt?.sessionConfig?.focus || 'Your workout'}
             </div>
-            <div className="text-sm mb-3" style={{ color: '#94a3b8' }}>
+            <div style={{
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 12,
+              color: 'rgba(0,0,0,0.5)',
+              marginBottom: 16,
+            }}>
               {activeStatus === 'in_progress'
                 ? `Exercise ${ctx.currentExerciseIndex + 1} of ${activeWkt?.exercises?.length ?? '?'} — paused`
                 : `${activeWkt?.exercises?.length ?? '?'} exercises · ${activeWkt?.estimated_duration_mins ?? '?'} min`}
             </div>
             <button
               onClick={resumeActiveWorkout}
-              className="w-full py-2.5 rounded-full font-semibold text-sm btn-press flex items-center justify-center gap-2"
               style={{
-                background: activeStatus === 'in_progress' ? '#6366f1' : '#8b5cf6',
-                color: '#fff',
+                width: '100%',
+                padding: '12px 0',
+                background: 'transparent',
+                border: '2px solid #000000',
+                borderRadius: 0,
+                fontFamily: "'Oswald', sans-serif",
+                fontWeight: 700,
+                fontSize: 13,
+                letterSpacing: 2,
+                textTransform: 'uppercase',
+                color: '#000000',
+                cursor: 'pointer',
               }}
             >
-              {activeStatus === 'in_progress' ? 'Resume Workout' : 'View Workout'}
-              <ChevronRight size={16} />
+              RESUME WORKOUT &rarr;
             </button>
           </div>
         </div>
       )}
 
-      {/* Programme card */}
+      {/* 8. Programme card */}
       {programme && nextProg && !hasActiveWorkout && (
-        <div className="px-5 mb-3">
-          <div
-            className="p-4 rounded-2xl animate-fade-in"
-            style={{ background: '#0f1f18', border: '1px solid #10b98140' }}
-          >
-            <div className="flex items-start justify-between mb-1">
-              <div>
-                <div className="text-xs font-semibold mb-0.5" style={{ color: '#10b981', letterSpacing: '0.05em' }}>
-                  PROGRAMME — {programme.name}
-                </div>
-                <div className="font-bold text-lg" style={{ color: '#f8fafc' }}>
-                  Next: {nextProg.dayName}
-                </div>
-                <div className="text-sm mt-0.5" style={{ color: '#94a3b8' }}>{nextProg.statusMsg}</div>
-              </div>
-              <div className="text-xs text-right" style={{ color: '#475569' }}>
-                Week {programme.currentWeek || 1}/{programme.weeks}
-              </div>
+        <div className="px-5" style={{ marginBottom: 16 }}>
+          <div style={{
+            borderLeft: '3px solid #E8FF00',
+            padding: '16px 20px',
+          }}>
+            <span style={{
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 10,
+              fontWeight: 500,
+              textTransform: 'uppercase',
+              letterSpacing: 2,
+              color: '#E8FF00',
+              display: 'block',
+              marginBottom: 6,
+            }}>
+              {programme.name}
+            </span>
+            <div style={{
+              fontFamily: "'Oswald', sans-serif",
+              fontWeight: 700,
+              fontSize: 22,
+              textTransform: 'uppercase',
+              color: '#FFFFFF',
+              marginBottom: 16,
+            }}>
+              {nextProg.dayName}
             </div>
             <button
               onClick={() => navigate('/programme/continue')}
-              className="w-full py-2.5 rounded-full font-semibold text-sm btn-press mt-3"
-              style={{ background: '#10b981', color: '#fff' }}
+              style={{
+                width: '100%',
+                padding: '14px 0',
+                background: '#E8FF00',
+                border: 'none',
+                borderRadius: 0,
+                fontFamily: "'Oswald', sans-serif",
+                fontWeight: 700,
+                fontSize: 13,
+                letterSpacing: 2,
+                textTransform: 'uppercase',
+                color: '#000000',
+                cursor: 'pointer',
+              }}
             >
-              Generate today&apos;s session →
+              GENERATE TODAY&apos;S SESSION &rarr;
             </button>
           </div>
         </div>
       )}
 
-      {/* Action grid */}
-      <div className="px-5">
-        <p className="text-xs font-semibold mb-3" style={{ color: '#475569', letterSpacing: '0.06em' }}>QUICK ACTIONS</p>
-        <div className="grid grid-cols-2 gap-2.5">
-          {mainCards.map(card => (
+      {/* 9. Primary CTA */}
+      {!hasActiveWorkout && (
+        <div className="px-5" style={{ marginBottom: 20 }}>
+          <button
+            onClick={startNewWorkout}
+            style={{
+              width: '100%',
+              padding: '16px 0',
+              background: '#E8FF00',
+              border: 'none',
+              borderRadius: 0,
+              fontFamily: "'Oswald', sans-serif",
+              fontWeight: 700,
+              fontSize: 15,
+              letterSpacing: 3,
+              textTransform: 'uppercase',
+              color: '#000000',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+            }}
+          >
+            <Zap size={16} />
+            START SESSION &rarr;
+          </button>
+        </div>
+      )}
+
+      {/* 10. Quick actions */}
+      <div className="px-5" style={{ marginBottom: 16 }}>
+        <div style={{
+          display: 'flex',
+          gap: 1,
+          background: '#222222',
+        }}>
+          {[
+            { label: 'HISTORY', onClick: () => navigate('/history') },
+            { label: 'EXERCISES', onClick: () => navigate('/exercises') },
+            { label: 'PROGRAMME', onClick: () => navigate('/programme/build') },
+          ].map((item) => (
             <button
-              key={card.title}
-              onClick={card.onClick}
-              className="flex flex-col items-start p-4 rounded-2xl text-left btn-press"
+              key={item.label}
+              onClick={item.onClick}
               style={{
-                background: '#111118',
-                border: '1px solid #1e1e2e',
-                minHeight: 88,
+                flex: 1,
+                background: '#111111',
+                border: 'none',
+                padding: '14px 0',
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 10,
+                fontWeight: 400,
+                textTransform: 'uppercase',
+                letterSpacing: 1,
+                color: '#888888',
+                cursor: 'pointer',
               }}
             >
-              <div className="text-2xl mb-2">{card.emoji}</div>
-              <div className="font-semibold text-sm" style={{ color: '#f8fafc' }}>{card.title}</div>
-              <div className="text-xs mt-0.5 leading-tight" style={{ color: '#475569' }}>{card.sub}</div>
+              {item.label}
             </button>
           ))}
         </div>
