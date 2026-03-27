@@ -1,4 +1,4 @@
-import { Star, Trophy } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 
 export default function EndOfWorkout({
   elapsedSeconds, exercises, setLogs, feedback, rating, onRating,
@@ -14,20 +14,20 @@ export default function EndOfWorkout({
   return (
     <div
       className="flex flex-col min-h-screen max-w-[430px] mx-auto pb-10"
-      style={{ background: '#0a0a0f' }}
+      style={{ background: '#0A0A0A' }}
     >
       {/* Celebration header */}
       <div className="flex flex-col items-center pt-16 pb-8 px-5 animate-celebrate">
         <div
-          className="w-20 h-20 rounded-full flex items-center justify-center mb-4"
-          style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #f97316 100%)', boxShadow: '0 0 40px rgba(245,158,11,0.35)' }}
+          className="flex items-center justify-center mb-4"
+          style={{ width: 80, height: 80, background: '#E8FF00', borderRadius: 0 }}
         >
-          <Trophy size={36} style={{ color: '#fff' }} />
+          <Trophy size={36} style={{ color: '#000000' }} />
         </div>
-        <h1 className="font-bold text-center" style={{ color: '#f8fafc', fontSize: 28, letterSpacing: '-0.02em' }}>
-          Workout Complete!
+        <h1 style={{ fontFamily: "'Oswald', sans-serif", fontWeight: 700, fontSize: 28, color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '-0.01em', textAlign: 'center' }}>
+          Workout Complete
         </h1>
-        <p className="text-sm mt-1.5 text-center" style={{ color: '#94a3b8' }}>
+        <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, color: '#888888', marginTop: 6, textAlign: 'center' }}>
           Your trainer is proud of you.
         </p>
       </div>
@@ -36,20 +36,20 @@ export default function EndOfWorkout({
         {/* Stats grid */}
         <div className="grid grid-cols-2 gap-2.5">
           {[
-            { label: 'DURATION', value: `${mins}m`, color: '#6366f1' },
-            { label: 'TOTAL SETS', value: totalSets, color: '#6366f1' },
-            { label: 'EXERCISES', value: exercisesLogged, color: '#10b981' },
-            { label: 'VOLUME', value: totalVolume > 0 ? `${(totalVolume / 1000).toFixed(1)}t` : '—', color: '#f59e0b' },
+            { label: 'DURATION', value: `${mins}m`, color: '#E8FF00' },
+            { label: 'TOTAL SETS', value: totalSets, color: '#E8FF00' },
+            { label: 'EXERCISES', value: exercisesLogged, color: '#22C55E' },
+            { label: 'VOLUME', value: totalVolume > 0 ? `${(totalVolume / 1000).toFixed(1)}t` : '—', color: '#E8FF00' },
           ].map(s => (
             <div
               key={s.label}
-              className="flex flex-col items-center py-5 rounded-2xl"
-              style={{ background: '#111118', border: '1px solid #1e1e2e' }}
+              className="flex flex-col items-center py-5"
+              style={{ background: '#111111', border: '1px solid #222222', borderRadius: 0 }}
             >
-              <span className="font-bold tabular-nums" style={{ color: s.color, fontSize: 28 }}>
+              <span style={{ fontFamily: "'Oswald', sans-serif", fontWeight: 700, fontSize: 28, color: s.color, fontVariantNumeric: 'tabular-nums' }}>
                 {s.value}
               </span>
-              <span style={{ fontSize: 10, color: '#475569', letterSpacing: '0.06em', marginTop: 4 }}>
+              <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 9, fontWeight: 500, color: '#555555', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 4 }}>
                 {s.label}
               </span>
             </div>
@@ -59,30 +59,30 @@ export default function EndOfWorkout({
         {/* AI Feedback */}
         {feedback && (
           <div
-            className="p-4 rounded-2xl animate-fade-in"
-            style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid #6366f130' }}
+            className="p-4 animate-fade-in"
+            style={{ background: '#111111', border: '1px solid #222222', borderRadius: 0 }}
           >
             <div className="flex items-center gap-2 mb-2">
               <div
-                className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0"
-                style={{ background: '#6366f1', color: '#fff' }}
+                className="flex items-center justify-center flex-shrink-0"
+                style={{ width: 28, height: 28, background: '#E8FF00', fontFamily: "'Oswald', sans-serif", fontWeight: 700, fontSize: 10, color: '#000000', borderRadius: 0 }}
               >
                 ST
               </div>
-              <p className="text-xs font-semibold" style={{ color: '#818cf8', letterSpacing: '0.04em' }}>
+              <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 9, fontWeight: 500, color: '#555555', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                 FROM YOUR TRAINER
               </p>
             </div>
-            <p className="text-sm leading-relaxed" style={{ color: '#e2e8f0' }}>{feedback}</p>
+            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, lineHeight: 1.6, color: '#888888' }}>{feedback}</p>
           </div>
         )}
 
         {/* Rating */}
         <div
-          className="p-4 rounded-2xl"
-          style={{ background: '#111118', border: '1px solid #1e1e2e' }}
+          className="p-4"
+          style={{ background: '#111111', border: '1px solid #222222', borderRadius: 0 }}
         >
-          <p className="text-xs font-semibold mb-3 text-center" style={{ color: '#475569', letterSpacing: '0.06em' }}>
+          <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 9, fontWeight: 500, color: '#555555', letterSpacing: '0.08em', textTransform: 'uppercase', textAlign: 'center', marginBottom: 12 }}>
             HOW DID THAT FEEL?
           </p>
           <div className="flex justify-center gap-2">
@@ -90,13 +90,20 @@ export default function EndOfWorkout({
               <button
                 key={n}
                 onClick={() => onRating(n)}
-                className="btn-press p-1"
+                className="btn-press flex items-center justify-center"
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 0,
+                  border: n <= rating ? 'none' : '1px solid #222222',
+                  background: n <= rating ? '#E8FF00' : 'transparent',
+                  fontFamily: "'Oswald', sans-serif",
+                  fontWeight: 700,
+                  fontSize: 18,
+                  color: n <= rating ? '#000000' : '#555555',
+                }}
               >
-                <Star
-                  size={36}
-                  fill={n <= rating ? '#f59e0b' : 'none'}
-                  style={{ color: n <= rating ? '#f59e0b' : '#2d2d3d' }}
-                />
+                {n}
               </button>
             ))}
           </div>
@@ -108,12 +115,14 @@ export default function EndOfWorkout({
           value={notes}
           onChange={e => onNotes(e.target.value)}
           rows={3}
-          className="w-full px-4 py-3 rounded-2xl text-sm outline-none resize-none"
+          className="w-full px-4 py-3 outline-none resize-none"
           style={{
-            background: '#111118',
-            border: '1px solid #2d2d3d',
-            color: '#f8fafc',
-            fontSize: 16,
+            background: '#111111',
+            border: '1px solid #222222',
+            color: '#FFFFFF',
+            fontSize: 14,
+            fontFamily: "'Inter', sans-serif",
+            borderRadius: 0,
           }}
         />
 
@@ -121,15 +130,22 @@ export default function EndOfWorkout({
         <button
           onClick={onSave}
           disabled={saving}
-          className="w-full py-4 rounded-full font-bold text-base btn-press"
+          className="w-full btn-press"
           style={{
-            background: saving ? '#3d3d50' : '#6366f1',
-            color: '#fff',
+            background: saving ? '#222222' : '#E8FF00',
+            color: saving ? '#555555' : '#000000',
+            height: 64,
+            fontFamily: "'Oswald', sans-serif",
+            fontWeight: 700,
             fontSize: 16,
+            textTransform: 'uppercase',
+            letterSpacing: '0.04em',
+            borderRadius: 0,
+            border: 'none',
             transition: 'background 0.2s',
           }}
         >
-          {saving ? 'Saving…' : 'Save Workout'}
+          {saving ? 'SAVING...' : 'SAVE WORKOUT'}
         </button>
       </div>
     </div>

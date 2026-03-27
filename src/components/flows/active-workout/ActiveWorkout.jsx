@@ -19,76 +19,50 @@ function RestTimer({ seconds, onSkip, tip }) {
     return () => clearTimeout(t);
   }, [remaining]);
 
-  const radius = 56;
-  const circ = 2 * Math.PI * radius;
   const isUrgent = remaining <= 5;
 
   return (
     <div className="flex flex-col items-center gap-5 py-8 animate-fade-in">
-      <p className="text-xs font-semibold" style={{ color: '#475569', letterSpacing: '0.1em' }}>REST</p>
-      <div className="relative" style={{ width: 144, height: 144 }}>
-        <svg width="144" height="144" viewBox="0 0 144 144">
-          <circle cx="72" cy="72" r={radius} fill="none" stroke="#1e1e2e" strokeWidth="6" />
-          <circle
-            cx="72" cy="72" r={radius}
-            fill="none"
-            stroke={isUrgent ? '#ef4444' : '#6366f1'}
-            strokeWidth="6"
-            strokeLinecap="round"
-            strokeDasharray={circ}
-            strokeDashoffset={circ * (1 - remaining / seconds)}
-            transform="rotate(-90 72 72)"
-            style={{ transition: 'stroke-dashoffset 1s linear, stroke 0.3s' }}
-          />
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span
-            style={{
-              fontSize: 40,
-              fontWeight: 800,
-              color: isUrgent ? '#ef4444' : '#f8fafc',
-              letterSpacing: '-0.03em',
-              lineHeight: 1,
-              fontVariantNumeric: 'tabular-nums',
-            }}
-          >
-            {remaining}
-          </span>
-          <span className="text-xs mt-1" style={{ color: '#475569' }}>seconds</span>
-        </div>
-      </div>
+      <span
+        style={{
+          fontSize: 72,
+          fontWeight: 700,
+          fontFamily: "'Oswald', sans-serif",
+          color: isUrgent ? '#EF4444' : '#FFFFFF',
+          letterSpacing: '-0.02em',
+          lineHeight: 1,
+          fontVariantNumeric: 'tabular-nums',
+          textTransform: 'uppercase',
+        }}
+      >
+        {remaining}
+      </span>
+      <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 9, fontWeight: 500, color: '#555555', letterSpacing: '0.12em', textTransform: 'uppercase' }}>REST</p>
 
       <div className="flex gap-2">
         <button
           onClick={() => setRemaining(r => r + 15)}
-          className="px-3 py-2 rounded-full text-xs font-semibold btn-press"
-          style={{ background: '#111118', border: '1px solid #2d2d3d', color: '#94a3b8' }}
+          className="btn-press"
+          style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 500, color: '#888888', background: 'transparent', border: '1px solid #222222', height: 48, padding: '0 20px', borderRadius: 0, textTransform: 'uppercase', letterSpacing: '0.06em' }}
         >
-          +15s
-        </button>
-        <button
-          onClick={() => setRemaining(r => r + 30)}
-          className="px-3 py-2 rounded-full text-xs font-semibold btn-press"
-          style={{ background: '#111118', border: '1px solid #2d2d3d', color: '#94a3b8' }}
-        >
-          +30s
+          +15S
         </button>
         <button
           onClick={onSkip}
-          className="px-5 py-2 rounded-full text-sm font-bold btn-press"
-          style={{ background: '#6366f1', color: '#fff' }}
+          className="btn-press"
+          style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 500, color: '#888888', background: 'transparent', border: '1px solid #222222', height: 48, padding: '0 20px', borderRadius: 0, textTransform: 'uppercase', letterSpacing: '0.06em' }}
         >
-          Skip Rest
+          SKIP
         </button>
       </div>
 
       {tip && (
         <div
-          className="mx-4 p-3 rounded-2xl animate-fade-in"
-          style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid #6366f130' }}
+          className="mx-4 p-3 animate-fade-in"
+          style={{ background: '#111111', border: '1px solid #222222', borderRadius: 0 }}
         >
-          <p className="text-xs font-semibold mb-1" style={{ color: '#818cf8', letterSpacing: '0.04em' }}>REST TIP</p>
-          <p className="text-sm" style={{ color: '#94a3b8' }}>{tip}</p>
+          <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 9, fontWeight: 500, color: '#555555', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4 }}>REST TIP</p>
+          <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, color: '#888888' }}>{tip}</p>
         </div>
       )}
     </div>
@@ -259,7 +233,7 @@ export default function ActiveWorkout() {
   const progressPct = ((exerciseIndex + completedSets / Math.max(totalSets, 1)) / Math.max(exercises.length, 1)) * 100;
 
   return (
-    <div className="flex flex-col min-h-screen max-w-[430px] mx-auto" style={{ background: '#0a0a0f' }}>
+    <div className="flex flex-col min-h-screen max-w-[430px] mx-auto" style={{ background: '#0A0A0A' }}>
       {/* Plate calc modal */}
       {showCalc && <PlateCalculator onClose={() => setShowCalc(false)} />}
 
@@ -270,32 +244,32 @@ export default function ActiveWorkout() {
           style={{ background: 'rgba(0,0,0,0.85)' }}
         >
           <div
-            className="w-full rounded-2xl p-6"
-            style={{ background: '#111118', border: '1px solid #2d2d3d', maxWidth: 360 }}
+            className="w-full p-6"
+            style={{ background: '#111111', border: '1px solid #222222', maxWidth: 360, borderRadius: 0 }}
           >
-            <h3 className="font-bold text-lg mb-2" style={{ color: '#f8fafc' }}>Leave workout?</h3>
-            <p className="text-sm mb-5 leading-relaxed" style={{ color: '#94a3b8' }}>
+            <h3 style={{ fontFamily: "'Oswald', sans-serif", fontWeight: 700, fontSize: 18, color: '#FFFFFF', textTransform: 'uppercase', marginBottom: 8 }}>Leave workout?</h3>
+            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, color: '#888888', marginBottom: 20, lineHeight: 1.5 }}>
               Choose what to do with your current session.
             </p>
             <div className="flex flex-col gap-2">
               <button
                 onClick={() => { setShowExitModal(false); finishWorkout(true); }}
-                className="py-3 rounded-xl font-semibold text-sm btn-press text-left px-4"
-                style={{ background: '#6366f1', color: '#fff' }}
+                className="py-3 btn-press text-left px-4"
+                style={{ background: '#E8FF00', color: '#000000', fontFamily: "'Oswald', sans-serif", fontWeight: 700, fontSize: 14, textTransform: 'uppercase', borderRadius: 0, border: 'none' }}
               >
                 Finish early &amp; save results
               </button>
               <button
                 onClick={cancelWorkout}
-                className="py-3 rounded-xl font-semibold text-sm btn-press text-left px-4"
-                style={{ background: 'transparent', border: '1px solid #ef444450', color: '#ef4444' }}
+                className="py-3 btn-press text-left px-4"
+                style={{ background: 'transparent', border: '1px solid #EF4444', color: '#EF4444', fontFamily: "'Inter', sans-serif", fontWeight: 500, fontSize: 14, borderRadius: 0 }}
               >
                 Cancel workout — discard progress
               </button>
               <button
                 onClick={() => setShowExitModal(false)}
-                className="py-3 rounded-xl font-semibold text-sm btn-press"
-                style={{ background: '#1a1a24', border: '1px solid #2d2d3d', color: '#94a3b8' }}
+                className="py-3 btn-press"
+                style={{ background: '#111111', border: '1px solid #222222', color: '#888888', fontFamily: "'Inter', sans-serif", fontWeight: 500, fontSize: 14, borderRadius: 0 }}
               >
                 Keep going
               </button>
@@ -305,14 +279,14 @@ export default function ActiveWorkout() {
       )}
 
       {/* Top bar */}
-      <div style={{ background: '#0a0a0f', borderBottom: '1px solid #1e1e2e' }}>
+      <div style={{ background: '#0A0A0A', borderBottom: '1px solid #222222' }}>
         <div className="flex items-center gap-3 px-4 py-3">
-          <button onClick={goHome} className="btn-press p-1" style={{ color: '#475569' }} title="Go home">
-            <Home size={20} />
+          <button onClick={goHome} className="btn-press" style={{ color: '#888888', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #222222', borderRadius: 0, background: 'transparent' }} title="Go home">
+            <Home size={18} />
           </button>
           <div className="flex-1">
             <div className="flex justify-between items-center mb-1.5">
-              <span className="text-xs font-semibold" style={{ color: '#475569', fontVariantNumeric: 'tabular-nums' }}>
+              <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 500, color: '#888888', fontVariantNumeric: 'tabular-nums' }}>
                 {exerciseIndex + 1} / {exercises.length}
               </span>
               <div className="flex gap-3 items-center">
@@ -321,29 +295,30 @@ export default function ActiveWorkout() {
                     .filter(s => s.set_type !== 'warmup')
                     .reduce((acc, s) => acc + (parseFloat(s.weight) || 0) * (parseInt(s.reps) || 1), 0);
                   return vol > 0 ? (
-                    <span className="text-xs font-semibold" style={{ color: '#6366f1', fontVariantNumeric: 'tabular-nums' }}>
+                    <span style={{ fontFamily: "'Oswald', sans-serif", fontSize: 12, fontWeight: 700, color: '#E8FF00', fontVariantNumeric: 'tabular-nums' }}>
                       {vol.toFixed(0)}kg
                     </span>
                   ) : null;
                 })()}
-                <span className="text-xs font-mono" style={{ color: '#475569' }}>
+                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontVariantNumeric: 'tabular-nums', color: '#555555' }}>
                   {formatTime(ctx.elapsedSeconds)}
                 </span>
               </div>
             </div>
-            <div className="h-1 rounded-full overflow-hidden" style={{ background: '#1e1e2e' }}>
+            <div className="overflow-hidden" style={{ height: 2, background: '#222222', borderRadius: 0 }}>
               <div
-                className="h-full rounded-full"
                 style={{
+                  height: '100%',
                   width: `${progressPct}%`,
-                  background: '#6366f1',
+                  background: '#E8FF00',
                   transition: 'width 0.5s ease',
+                  borderRadius: 0,
                 }}
               />
             </div>
           </div>
-          <button onClick={() => setShowExitModal(true)} className="btn-press p-1" style={{ color: '#475569' }}>
-            <X size={20} />
+          <button onClick={() => setShowExitModal(true)} className="btn-press" style={{ color: '#888888', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #222222', borderRadius: 0, background: 'transparent' }}>
+            <X size={18} />
           </button>
         </div>
       </div>
@@ -367,34 +342,33 @@ export default function ActiveWorkout() {
                 {(currentEx?.muscle_groups || []).map(mg => (
                   <span
                     key={mg}
-                    className="text-xs px-2.5 py-1 rounded-full"
-                    style={{ background: '#1a1a24', color: '#94a3b8', border: '1px solid #2d2d3d' }}
+                    style={{ fontFamily: "'Inter', sans-serif", fontSize: 9, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#555555', border: '1px solid #222222', borderRadius: 0, padding: '4px 8px', display: 'inline-block' }}
                   >
                     {mg}
                   </span>
                 ))}
               </div>
               <div className="flex items-start gap-2">
-                <h1 className="font-bold flex-1 leading-tight" style={{ color: '#f8fafc', fontSize: 26, letterSpacing: '-0.02em' }}>
+                <h1 className="flex-1 leading-tight" style={{ fontFamily: "'Oswald', sans-serif", fontWeight: 700, fontSize: 32, color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '-0.01em' }}>
                   {currentEx?.name || '—'}
                 </h1>
                 <button
                   onClick={() => setShowCalc(true)}
-                  className="btn-press flex items-center justify-center rounded-xl mt-1"
-                  style={{ width: 36, height: 36, background: '#111118', border: '1px solid #2d2d3d', color: '#475569', flexShrink: 0 }}
+                  className="btn-press flex items-center justify-center mt-1"
+                  style={{ width: 36, height: 36, background: '#111111', border: '1px solid #222222', color: '#555555', flexShrink: 0, borderRadius: 0 }}
                   title="Plate / warm-up calculator"
                 >
                   <Calculator size={15} />
                 </button>
               </div>
               <div className="flex gap-3 mt-1.5">
-                <span className="text-sm font-semibold" style={{ color: '#f97316' }}>
+                <span style={{ fontFamily: "'Oswald', sans-serif", fontWeight: 700, fontSize: 14, color: '#E8FF00', textTransform: 'uppercase' }}>
                   {currentEx?.sets} sets × {currentEx?.reps}
                 </span>
-                <span className="text-sm" style={{ color: '#475569' }}>Rest: {currentEx?.rest_seconds}s</span>
+                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#555555' }}>Rest: {currentEx?.rest_seconds}s</span>
               </div>
               {currentEx?.weight_guidance && (
-                <p className="text-sm mt-0.5" style={{ color: '#475569' }}>{currentEx.weight_guidance}</p>
+                <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#555555', marginTop: 2 }}>{currentEx.weight_guidance}</p>
               )}
             </div>
 
@@ -403,11 +377,12 @@ export default function ActiveWorkout() {
               {Array.from({ length: totalSets }).map((_, i) => (
                 <div
                   key={i}
-                  className="flex-1 rounded-full"
                   style={{
-                    height: 4,
-                    background: i < completedSets ? '#6366f1' : '#1e1e2e',
+                    flex: 1,
+                    height: 2,
+                    background: i < completedSets ? '#E8FF00' : '#222222',
                     transition: 'background 0.3s',
+                    borderRadius: 0,
                   }}
                 />
               ))}
@@ -436,28 +411,20 @@ export default function ActiveWorkout() {
             {/* Logged sets */}
             {currentLogs.length > 0 && (
               <div className="mt-4 flex flex-col gap-1.5">
-                <p className="text-xs font-semibold" style={{ color: '#475569', letterSpacing: '0.06em' }}>COMPLETED SETS</p>
+                <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 9, fontWeight: 500, color: '#555555', letterSpacing: '0.08em', textTransform: 'uppercase' }}>COMPLETED SETS</p>
                 {currentLogs.map((s, i) => {
                   const type = getExerciseType(currentEx);
                   const summary = EXERCISE_TYPE_CONFIG[type]?.summary(s) || '';
                   return (
                     <div
                       key={i}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm"
-                      style={{ background: '#111118', border: '1px solid #1e1e2e' }}
+                      className="flex items-center gap-3 px-3 py-2.5"
+                      style={{ background: '#111111', borderLeft: '3px solid #E8FF00', borderRadius: 0 }}
                     >
-                      <div
-                        className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                        style={{ background: '#6366f115' }}
-                      >
-                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                          <path d="M1 4L3.5 6.5L9 1.5" stroke="#818cf8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </div>
-                      <span className="font-medium" style={{ color: '#818cf8' }}>
+                      <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 500, color: '#888888' }}>
                         {type === 'cardio' ? `Round ${i + 1}` : `Set ${i + 1}`}
                       </span>
-                      <span style={{ color: '#f8fafc' }}>{summary}</span>
+                      <span style={{ fontFamily: "'Oswald', sans-serif", fontWeight: 700, fontSize: 14, color: '#FFFFFF' }}>{summary}</span>
                     </div>
                   );
                 })}
@@ -469,17 +436,17 @@ export default function ActiveWorkout() {
               <div className="mt-4">
                 <button
                   onClick={() => setShowCues(c => !c)}
-                  className="flex items-center gap-2 text-sm btn-press"
-                  style={{ color: '#475569' }}
+                  className="flex items-center gap-2 btn-press"
+                  style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 500, color: '#555555', textTransform: 'uppercase', letterSpacing: '0.06em' }}
                 >
                   {showCues ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                   <span>Form cues</span>
                 </button>
                 {showCues && (
-                  <div className="mt-2 p-3 rounded-xl animate-fade-in" style={{ background: '#111118', border: '1px solid #1e1e2e' }}>
+                  <div className="mt-2 p-3 animate-fade-in" style={{ background: '#111111', border: '1px solid #222222', borderRadius: 0 }}>
                     {currentEx.form_cues.map((cue, i) => (
-                      <p key={i} className="text-sm py-1" style={{ color: '#94a3b8' }}>
-                        <span style={{ color: '#6366f1' }}>→</span> {cue}
+                      <p key={i} className="py-1" style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#888888' }}>
+                        <span style={{ color: '#E8FF00' }}>→</span> {cue}
                       </p>
                     ))}
                   </div>
@@ -493,39 +460,45 @@ export default function ActiveWorkout() {
       {/* Bottom nav */}
       <div
         className="flex items-center gap-2 px-4 py-3"
-        style={{ background: '#0a0a0f', borderTop: '1px solid #1e1e2e' }}
+        style={{ background: '#0A0A0A', borderTop: '1px solid #222222' }}
       >
         <button
           onClick={goPrev}
           disabled={exerciseIndex === 0}
-          className="btn-press flex items-center justify-center rounded-xl"
+          className="btn-press flex items-center gap-1 justify-center"
           style={{
-            width: 44,
             height: 44,
-            background: '#111118',
-            border: '1px solid #2d2d3d',
-            color: exerciseIndex === 0 ? '#2d2d3d' : '#94a3b8',
+            padding: '0 12px',
+            background: 'transparent',
+            border: '1px solid #222222',
+            borderRadius: 0,
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 11,
+            fontWeight: 500,
+            color: exerciseIndex === 0 ? '#222222' : '#888888',
+            textTransform: 'uppercase',
+            letterSpacing: '0.04em',
           }}
         >
-          <ChevronLeft size={20} />
+          <ChevronLeft size={14} /> PREV
         </button>
         <button
           onClick={() => {
             const reason = prompt('Why skipping? (Equipment busy / Pain / Too easy/hard)') || 'skipped';
             skipExercise(reason);
           }}
-          className="flex-1 py-3 rounded-xl text-sm font-medium btn-press flex items-center justify-center gap-2"
-          style={{ background: '#111118', color: '#475569', border: '1px solid #2d2d3d' }}
+          className="flex-1 btn-press flex items-center justify-center gap-2"
+          style={{ height: 44, background: 'transparent', border: '1px solid #222222', borderRadius: 0, fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 500, color: '#555555', textTransform: 'uppercase', letterSpacing: '0.04em' }}
         >
-          <SkipForward size={15} />
+          <SkipForward size={13} />
           Skip
         </button>
         <button
           onClick={goNext}
-          className="btn-press flex items-center justify-center rounded-xl"
-          style={{ width: 44, height: 44, background: '#6366f1', color: '#fff' }}
+          className="btn-press flex items-center gap-1 justify-center"
+          style={{ height: 44, padding: '0 12px', background: '#E8FF00', color: '#000000', borderRadius: 0, border: 'none', fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.04em' }}
         >
-          <ChevronRight size={20} />
+          NEXT <ChevronRight size={14} />
         </button>
       </div>
     </div>
@@ -581,10 +554,10 @@ const EXERCISE_TYPE_CONFIG = {
 };
 
 const SET_TYPES = [
-  { id: 'working', label: 'Working', color: '#6366f1' },
-  { id: 'warmup',  label: 'Warm-up', color: '#10b981' },
-  { id: 'drop',    label: 'Drop',    color: '#8b5cf6' },
-  { id: 'failure', label: 'Failure', color: '#ef4444' },
+  { id: 'working', label: 'Working', color: '#E8FF00' },
+  { id: 'warmup',  label: 'Warm-up', color: '#22C55E' },
+  { id: 'drop',    label: 'Drop',    color: '#888888' },
+  { id: 'failure', label: 'Failure', color: '#EF4444' },
 ];
 
 function SetLogger({ onLog, setNumber, totalSets, exercise, previousSet, lastPerformance }) {
@@ -632,35 +605,43 @@ function SetLogger({ onLog, setNumber, totalSets, exercise, previousSet, lastPer
     return null;
   })();
 
-  const logBtnColor = setType === 'failure' ? '#ef4444' : setType === 'warmup' ? '#10b981' : '#6366f1';
+  const logBtnColor = setType === 'failure' ? '#EF4444' : setType === 'warmup' ? '#22C55E' : '#E8FF00';
+  const logBtnTextColor = setType === 'failure' ? '#FFFFFF' : setType === 'warmup' ? '#FFFFFF' : '#000000';
 
   return (
     <div
-      className="p-4 rounded-2xl animate-fade-in"
-      style={{ background: '#111118', border: '1px solid #1e1e2e' }}
+      className="p-4 animate-fade-in"
+      style={{ background: '#111111', border: '1px solid #222222', borderRadius: 0 }}
     >
       {/* Last performance banner */}
       {lastLabel && (
         <div
-          className="mb-3 px-3 py-2 rounded-xl flex items-center gap-2"
-          style={{ background: '#0f1f18', border: '1px solid #10b98130' }}
+          className="mb-3 px-3 py-2 flex items-center gap-2"
+          style={{ background: '#0A0A0A', borderLeft: '3px solid #22C55E', borderRadius: 0 }}
         >
-          <span className="text-xs" style={{ color: '#475569' }}>Last time:</span>
-          <span className="text-xs font-bold" style={{ color: '#10b981' }}>{lastLabel}</span>
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: '#555555' }}>Last time:</span>
+          <span style={{ fontFamily: "'Oswald', sans-serif", fontWeight: 700, fontSize: 12, color: '#22C55E' }}>{lastLabel}</span>
         </div>
       )}
 
       <div className="flex items-center justify-between mb-4">
-        <p className="text-xs font-semibold" style={{ color: '#475569', letterSpacing: '0.06em' }}>
+        <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 9, fontWeight: 500, color: '#555555', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
           {config.label(setNumber)} OF {totalSets}
         </p>
         <button
           onClick={() => setShowAdvanced(v => !v)}
-          className="px-2.5 py-1 rounded-full text-xs font-semibold btn-press"
+          className="btn-press"
           style={{
-            background: `${activeSetType?.color}20`,
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 9,
+            fontWeight: 500,
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+            padding: '4px 10px',
+            borderRadius: 0,
+            background: 'transparent',
             color: activeSetType?.color,
-            border: `1px solid ${activeSetType?.color}40`,
+            border: `1px solid ${activeSetType?.color}`,
           }}
         >
           {activeSetType?.label}
@@ -669,17 +650,24 @@ function SetLogger({ onLog, setNumber, totalSets, exercise, previousSet, lastPer
 
       {/* Advanced options */}
       {showAdvanced && (
-        <div className="mb-4 p-3 rounded-xl" style={{ background: '#0d0d14', border: '1px solid #1e1e2e' }}>
+        <div className="mb-4 p-3" style={{ background: '#0A0A0A', border: '1px solid #222222', borderRadius: 0 }}>
           <div className="flex gap-1.5 flex-wrap mb-3">
             {SET_TYPES.map(st => (
               <button
                 key={st.id}
                 onClick={() => setSetType(st.id)}
-                className="px-2.5 py-1 rounded-full text-xs font-semibold btn-press"
+                className="btn-press"
                 style={{
-                  background: setType === st.id ? `${st.color}20` : 'transparent',
-                  color: setType === st.id ? st.color : '#475569',
-                  border: `1px solid ${setType === st.id ? st.color : '#2d2d3d'}`,
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: 9,
+                  fontWeight: 500,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                  padding: '4px 10px',
+                  borderRadius: 0,
+                  background: setType === st.id ? st.color : 'transparent',
+                  color: setType === st.id ? (st.id === 'working' ? '#000000' : '#FFFFFF') : '#555555',
+                  border: `1px solid ${setType === st.id ? st.color : '#222222'}`,
                   transition: 'all 0.15s',
                 }}
               >
@@ -688,14 +676,14 @@ function SetLogger({ onLog, setNumber, totalSets, exercise, previousSet, lastPer
             ))}
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-xs font-semibold" style={{ color: '#475569', letterSpacing: '0.04em' }}>RPE</label>
+            <label style={{ fontFamily: "'Inter', sans-serif", fontSize: 9, fontWeight: 500, color: '#555555', letterSpacing: '0.06em', textTransform: 'uppercase' }}>RPE</label>
             <input
               type="number" min="1" max="10"
               value={rpe}
               onChange={e => setRpe(e.target.value)}
               placeholder="1–10"
-              className="w-16 px-2 py-1.5 rounded-lg text-sm text-center outline-none"
-              style={{ background: '#111118', border: '1px solid #2d2d3d', color: '#f8fafc', fontSize: 14 }}
+              className="w-16 px-2 py-1.5 text-center outline-none"
+              style={{ background: '#111111', border: '1px solid #222222', color: '#FFFFFF', fontSize: 14, borderRadius: 0, fontFamily: "'Inter', sans-serif" }}
             />
           </div>
         </div>
@@ -705,7 +693,7 @@ function SetLogger({ onLog, setNumber, totalSets, exercise, previousSet, lastPer
       <div className="flex gap-3 mb-4">
         {config.fields.map(f => (
           <div key={f.key} className="flex-1">
-            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569', letterSpacing: '0.05em' }}>
+            <label className="mb-1.5 block" style={{ fontFamily: "'Inter', sans-serif", fontSize: 9, fontWeight: 500, color: '#555555', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
               {f.label}
             </label>
             <input
@@ -714,16 +702,18 @@ function SetLogger({ onLog, setNumber, totalSets, exercise, previousSet, lastPer
               placeholder={f.placeholder(exercise)}
               value={vals[f.key]}
               onChange={e => setVals(v => ({ ...v, [f.key]: e.target.value }))}
-              className="w-full px-3 rounded-xl text-center outline-none"
+              className="w-full px-3 text-center outline-none"
               style={{
-                background: '#0d0d14',
-                border: '1px solid #2d2d3d',
-                color: '#f8fafc',
+                background: '#111111',
+                border: '1px solid #222222',
+                color: '#FFFFFF',
                 fontSize: 28,
-                fontWeight: 800,
-                height: 64,
+                fontWeight: 700,
+                fontFamily: "'Oswald', sans-serif",
+                height: 48,
                 letterSpacing: '-0.02em',
                 fontVariantNumeric: 'tabular-nums',
+                borderRadius: 0,
               }}
             />
           </div>
@@ -732,10 +722,10 @@ function SetLogger({ onLog, setNumber, totalSets, exercise, previousSet, lastPer
 
       <button
         onClick={handleLog}
-        className="w-full rounded-full font-bold text-base btn-press flex items-center justify-center gap-2"
-        style={{ background: logBtnColor, color: '#fff', height: 52, fontSize: 15 }}
+        className="w-full btn-press flex items-center justify-center gap-2"
+        style={{ background: logBtnColor, color: logBtnTextColor, height: 64, fontFamily: "'Oswald', sans-serif", fontWeight: 700, fontSize: 16, textTransform: 'uppercase', letterSpacing: '0.04em', borderRadius: 0, border: 'none' }}
       >
-        ✓ Log {setType === 'warmup' ? 'Warm-up' : setType === 'failure' ? 'Failure Set' : type === 'cardio' ? 'Round' : 'Set'}
+        COMPLETE SET →
       </button>
     </div>
   );
