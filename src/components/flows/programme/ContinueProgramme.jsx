@@ -20,16 +20,48 @@ export default function ContinueProgramme() {
 
   if (!programme) {
     return (
-      <div className="flex flex-col min-h-screen max-w-[430px] mx-auto">
+      <div className="flex flex-col min-h-screen max-w-[430px] mx-auto" style={{ background: '#0A0A0A' }}>
         <ScreenHeader title="My Programme" />
-        <div className="flex flex-col items-center justify-center flex-1 gap-4 px-6 text-center">
-          <p className="text-4xl">📋</p>
-          <p className="font-semibold" style={{ color: '#f1f5f9' }}>No active programme</p>
-          <p className="text-sm" style={{ color: '#64748b' }}>Build a structured plan to get started.</p>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flex: 1,
+          gap: 16,
+          padding: '0 24px',
+          textAlign: 'center',
+        }}>
+          <p style={{
+            fontFamily: "'Oswald', sans-serif",
+            fontWeight: 700,
+            fontSize: 18,
+            textTransform: 'uppercase',
+            color: '#FFFFFF',
+            margin: 0,
+          }}>No active programme</p>
+          <p style={{
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 13,
+            color: '#888888',
+            margin: 0,
+          }}>Build a structured plan to get started.</p>
           <button
             onClick={() => navigate('/programme/build')}
-            className="px-6 py-3 rounded-xl font-semibold btn-press"
-            style={{ background: '#3b82f6', color: '#fff' }}
+            className="btn-press"
+            style={{
+              padding: '14px 24px',
+              background: '#E8FF00',
+              border: 'none',
+              borderRadius: 0,
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 13,
+              fontWeight: 500,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              color: '#000000',
+              cursor: 'pointer',
+            }}
           >
             Build a Programme
           </button>
@@ -84,7 +116,7 @@ export default function ContinueProgramme() {
 
   if (loading) {
     return (
-      <div className="flex flex-col min-h-screen max-w-[430px] mx-auto">
+      <div className="flex flex-col min-h-screen max-w-[430px] mx-auto" style={{ background: '#0A0A0A' }}>
         <ScreenHeader title="Loading Session" />
         <LoadingState message={`Generating your ${nextDay?.name} session...`} />
       </div>
@@ -93,7 +125,7 @@ export default function ContinueProgramme() {
 
   if (error) {
     return (
-      <div className="flex flex-col min-h-screen max-w-[430px] mx-auto">
+      <div className="flex flex-col min-h-screen max-w-[430px] mx-auto" style={{ background: '#0A0A0A' }}>
         <ScreenHeader title="Error" onBack={() => setError(null)} />
         <ErrorState message={error} onRetry={generate} />
       </div>
@@ -118,59 +150,112 @@ export default function ContinueProgramme() {
   const overallProgress = ((lastIndex + 1) / (split.length * programme.weeks));
 
   return (
-    <div className="flex flex-col min-h-screen max-w-[430px] mx-auto pb-8">
+    <div className="flex flex-col min-h-screen max-w-[430px] mx-auto pb-8" style={{ background: '#0A0A0A' }}>
       <ScreenHeader title={programme.name} />
 
-      <div className="px-4 flex flex-col gap-4">
+      <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {/* Programme name */}
+        <h2 style={{
+          fontFamily: "'Oswald', sans-serif",
+          fontWeight: 700,
+          fontSize: 24,
+          textTransform: 'uppercase',
+          color: '#FFFFFF',
+          margin: 0,
+        }}>{programme.name}</h2>
+
         {/* Progress */}
-        <div className="p-4 rounded-xl" style={{ background: '#1e1e2a', border: '1px solid #2a2a3a' }}>
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-semibold" style={{ color: '#f1f5f9' }}>
+        <div style={{ padding: 16, border: '1px solid #222222' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <span style={{
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 13,
+              fontWeight: 500,
+              color: '#FFFFFF',
+            }}>
               Week {programme.currentWeek} of {programme.weeks}
             </span>
-            <span className="text-xs" style={{ color: '#64748b' }}>
+            <span style={{
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 11,
+              color: '#555555',
+            }}>
               {Math.round(overallProgress * 100)}% complete
             </span>
           </div>
-          <div className="h-2 rounded-full overflow-hidden" style={{ background: '#0f0f14' }}>
-            <div
-              className="h-full rounded-full transition-all"
-              style={{ width: `${overallProgress * 100}%`, background: '#3b82f6' }}
-            />
+          <div style={{ height: 2, background: '#222222' }}>
+            <div style={{
+              height: '100%',
+              width: `${overallProgress * 100}%`,
+              background: '#E8FF00',
+              transition: 'width 0.3s ease',
+            }} />
           </div>
         </div>
 
         {/* Split overview */}
         <div>
-          <p className="text-xs font-semibold mb-2" style={{ color: '#64748b' }}>THIS WEEK&apos;S SPLIT</p>
-          <div className="flex flex-col gap-1.5">
+          <p style={{
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 9,
+            fontWeight: 500,
+            textTransform: 'uppercase',
+            letterSpacing: '0.1em',
+            color: '#555555',
+            margin: '0 0 8px 0',
+          }}>THIS WEEK&apos;S SPLIT</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {split.map((day, i) => {
               const isDone = i <= lastIndex;
               const isNext = i === nextIndex;
               return (
                 <div
                   key={i}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl"
                   style={{
-                    background: isNext ? '#1e2d4a' : '#1e1e2a',
-                    border: `1px solid ${isNext ? '#3b82f6' : '#2a2a3a'}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '12px 16px',
+                    border: `1px solid ${isNext ? '#E8FF00' : '#222222'}`,
+                    background: isNext ? 'rgba(232,255,0,0.05)' : 'transparent',
+                    borderLeft: isNext ? '3px solid #E8FF00' : undefined,
                   }}
                 >
                   {isDone ? (
-                    <CheckCircle size={18} style={{ color: '#10b981' }} />
+                    <CheckCircle size={18} style={{ color: '#E8FF00' }} />
                   ) : isNext ? (
-                    <div className="w-4.5 h-4.5 rounded-full border-2 animate-pulse-slow" style={{ borderColor: '#3b82f6', width: 18, height: 18 }} />
+                    <div style={{
+                      width: 18,
+                      height: 18,
+                      border: '2px solid #E8FF00',
+                    }} />
                   ) : (
-                    <Circle size={18} style={{ color: '#2a2a3a' }} />
+                    <Circle size={18} style={{ color: '#333333' }} />
                   )}
-                  <span
-                    className="font-medium"
-                    style={{ color: isDone ? '#64748b' : isNext ? '#93c5fd' : '#94a3b8' }}
-                  >
+                  <span style={{
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: 14,
+                    fontWeight: 500,
+                    color: isDone ? '#555555' : isNext ? '#FFFFFF' : '#888888',
+                  }}>
                     {day.name}
                   </span>
-                  {isDone && <span className="ml-auto text-xs" style={{ color: '#10b981' }}>✓</span>}
-                  {isNext && <span className="ml-auto text-xs font-semibold" style={{ color: '#3b82f6' }}>NEXT</span>}
+                  {isDone && <span style={{
+                    marginLeft: 'auto',
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: 10,
+                    textTransform: 'uppercase',
+                    color: '#E8FF00',
+                  }}>Done</span>}
+                  {isNext && <span style={{
+                    marginLeft: 'auto',
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: 10,
+                    fontWeight: 500,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    color: '#E8FF00',
+                  }}>NEXT</span>}
                 </div>
               );
             })}
@@ -179,8 +264,17 @@ export default function ContinueProgramme() {
 
         {/* Status message */}
         {daysSinceLast >= 7 && (
-          <div className="p-3 rounded-xl" style={{ background: '#2e1f0f', border: '1px solid #f9731650' }}>
-            <p className="text-sm" style={{ color: '#fed7aa' }}>
+          <div style={{
+            padding: 12,
+            borderLeft: '2px solid #EF4444',
+            background: '#111111',
+          }}>
+            <p style={{
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 13,
+              color: '#888888',
+              margin: 0,
+            }}>
               It&apos;s been {daysSinceLast} days. Restart from Week 1 or pick up where you left off?
             </p>
             <button
@@ -189,8 +283,18 @@ export default function ContinueProgramme() {
                 storage.setActiveProgramme(prog);
                 navigate('/');
               }}
-              className="mt-2 text-xs underline"
-              style={{ color: '#f97316' }}
+              style={{
+                marginTop: 8,
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 11,
+                textTransform: 'uppercase',
+                color: '#EF4444',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+                textDecoration: 'underline',
+              }}
             >
               Restart from Week 1
             </button>
@@ -199,7 +303,13 @@ export default function ContinueProgramme() {
 
         {/* Notes */}
         <div>
-          <p className="text-sm font-medium mb-1.5" style={{ color: '#94a3b8' }}>
+          <p style={{
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 13,
+            fontWeight: 500,
+            color: '#888888',
+            margin: '0 0 6px 0',
+          }}>
             Anything your trainer should know before {nextDay?.name}?
           </p>
           <textarea
@@ -207,20 +317,48 @@ export default function ContinueProgramme() {
             value={notes}
             onChange={e => setNotes(e.target.value.slice(0, 200))}
             rows={3}
-            className="w-full px-4 py-3 rounded-xl text-sm outline-none resize-none"
-            style={{ background: '#1e1e2a', border: '1px solid #2a2a3a', color: '#f1f5f9' }}
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              background: '#111111',
+              border: '1px solid #222222',
+              borderRadius: 0,
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 13,
+              color: '#FFFFFF',
+              outline: 'none',
+              resize: 'none',
+              boxSizing: 'border-box',
+            }}
           />
-          <div className="flex justify-between mt-1">
-            <span className="text-xs" style={{ color: '#475569' }}>{notes.length}/200</span>
-            <span className="text-xs" style={{ color: '#475569' }}>Optional</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, color: '#555555' }}>{notes.length}/200</span>
+            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, color: '#555555', textTransform: 'uppercase' }}>Optional</span>
           </div>
         </div>
 
         {/* CTA */}
         <button
           onClick={generate}
-          className="w-full py-4 rounded-xl font-bold text-base btn-press flex items-center justify-center gap-2"
-          style={{ background: '#10b981', color: '#fff' }}
+          className="btn-press"
+          style={{
+            width: '100%',
+            padding: '16px 0',
+            background: '#E8FF00',
+            border: 'none',
+            borderRadius: 0,
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 14,
+            fontWeight: 500,
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            color: '#000000',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+          }}
         >
           Generate {nextDay?.name} Session
           <ChevronRight size={20} />

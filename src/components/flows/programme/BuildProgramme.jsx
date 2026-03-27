@@ -8,12 +8,12 @@ import { storage } from '../../../utils/storage';
 import { generateProgrammeOverview } from '../../../api/anthropic';
 
 const GOALS = [
-  { id: 'muscle', emoji: '🏗️', label: 'Build muscle and strength' },
-  { id: 'fat_loss', emoji: '🔥', label: 'Lose fat and get lean' },
-  { id: 'endurance', emoji: '🏃', label: 'Improve endurance and fitness' },
-  { id: 'recomp', emoji: '⚖️', label: 'Body recomposition' },
-  { id: 'sport', emoji: '🏆', label: 'Train for an event or sport' },
-  { id: 'health', emoji: '💆', label: 'General health and wellbeing' },
+  { id: 'muscle', label: 'Build muscle and strength' },
+  { id: 'fat_loss', label: 'Lose fat and get lean' },
+  { id: 'endurance', label: 'Improve endurance and fitness' },
+  { id: 'recomp', label: 'Body recomposition' },
+  { id: 'sport', label: 'Train for an event or sport' },
+  { id: 'health', label: 'General health and wellbeing' },
 ];
 
 const SPLITS = {
@@ -112,7 +112,7 @@ export default function BuildProgramme() {
 
   if (loading) {
     return (
-      <div className="flex flex-col min-h-screen max-w-[430px] mx-auto">
+      <div className="flex flex-col min-h-screen max-w-[430px] mx-auto" style={{ background: '#0A0A0A' }}>
         <ScreenHeader title="Building Programme" />
         <LoadingState message="Your trainer is designing your programme..." />
       </div>
@@ -121,93 +121,213 @@ export default function BuildProgramme() {
 
   if (error) {
     return (
-      <div className="flex flex-col min-h-screen max-w-[430px] mx-auto">
+      <div className="flex flex-col min-h-screen max-w-[430px] mx-auto" style={{ background: '#0A0A0A' }}>
         <ScreenHeader title="Error" onBack={() => setError(null)} />
         <ErrorState message={error} onRetry={generateOverview} />
       </div>
     );
   }
 
+  /* Step counter style */
+  const stepCounter = (
+    <div style={{
+      fontFamily: "'Inter', sans-serif",
+      fontSize: 10,
+      fontWeight: 500,
+      color: '#555555',
+      textAlign: 'right',
+      marginBottom: 16,
+    }}>
+      {step + 1} / {totalSteps}
+    </div>
+  );
+
   const steps = [
     // Goal
-    <div key={0} className="flex flex-col gap-3 animate-fade-in px-4">
-      <h2 className="text-xl font-bold" style={{ color: '#f1f5f9' }}>What&apos;s your primary goal?</h2>
-      <div className="flex flex-col gap-2">
-        {GOALS.map(g => (
-          <button
-            key={g.id}
-            onClick={() => { update('goal', g.id); setStep(1); }}
-            className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-left btn-press transition-all"
-            style={{
-              background: config.goal === g.id ? '#1e2d4a' : '#1e1e2a',
-              border: `1px solid ${config.goal === g.id ? '#3b82f6' : '#2a2a3a'}`,
-            }}
-          >
-            <span className="text-xl">{g.emoji}</span>
-            <span className="font-semibold" style={{ color: '#f1f5f9' }}>{g.label}</span>
-            {config.goal === g.id && <Check size={16} className="ml-auto" style={{ color: '#3b82f6' }} />}
-          </button>
-        ))}
+    <div key={0} className="animate-fade-in" style={{ padding: '0 16px' }}>
+      {stepCounter}
+      <h2 style={{
+        fontFamily: "'Oswald', sans-serif",
+        fontWeight: 700,
+        fontSize: 22,
+        textTransform: 'uppercase',
+        color: '#FFFFFF',
+        margin: '0 0 16px 0',
+      }}>What&apos;s your primary goal?</h2>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {GOALS.map(g => {
+          const selected = config.goal === g.id;
+          return (
+            <button
+              key={g.id}
+              onClick={() => { update('goal', g.id); setStep(1); }}
+              className="btn-press"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                padding: '14px 16px',
+                background: selected ? '#E8FF00' : 'transparent',
+                border: `1px solid ${selected ? '#E8FF00' : '#222222'}`,
+                borderRadius: 0,
+                textAlign: 'left',
+                cursor: 'pointer',
+                color: selected ? '#000000' : '#FFFFFF',
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 14,
+                fontWeight: 500,
+              }}
+            >
+              <span style={{ flex: 1 }}>{g.label}</span>
+              {selected && <Check size={16} style={{ color: '#000000' }} />}
+            </button>
+          );
+        })}
       </div>
     </div>,
 
     // Length
-    <div key={1} className="flex flex-col gap-5 animate-fade-in px-4">
-      <div>
-        <h2 className="text-xl font-bold" style={{ color: '#f1f5f9' }}>Programme length</h2>
-        <p className="text-sm mt-1" style={{ color: '#64748b' }}>
-          Research shows 6–8 weeks is optimal for measurable adaptation.
+    <div key={1} className="animate-fade-in" style={{ padding: '0 16px' }}>
+      {stepCounter}
+      <div style={{ marginBottom: 20 }}>
+        <h2 style={{
+          fontFamily: "'Oswald', sans-serif",
+          fontWeight: 700,
+          fontSize: 22,
+          textTransform: 'uppercase',
+          color: '#FFFFFF',
+          margin: '0 0 4px 0',
+        }}>Programme length</h2>
+        <p style={{
+          fontFamily: "'Inter', sans-serif",
+          fontSize: 13,
+          color: '#888888',
+          margin: 0,
+        }}>
+          Research shows 6-8 weeks is optimal for measurable adaptation.
         </p>
       </div>
-      <div className="grid grid-cols-4 gap-2">
-        {[4, 6, 8, 12].map(w => (
-          <button
-            key={w}
-            onClick={() => update('weeks', w)}
-            className="py-4 rounded-xl font-bold text-lg btn-press transition-all"
-            style={{
-              background: config.weeks === w ? '#3b82f6' : '#1e1e2a',
-              border: `1px solid ${config.weeks === w ? '#3b82f6' : '#2a2a3a'}`,
-              color: config.weeks === w ? '#fff' : '#94a3b8',
-            }}
-          >
-            {w}<span className="text-sm font-normal block">wks</span>
-          </button>
-        ))}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+        {[4, 6, 8, 12].map(w => {
+          const selected = config.weeks === w;
+          return (
+            <button
+              key={w}
+              onClick={() => update('weeks', w)}
+              className="btn-press"
+              style={{
+                padding: '16px 0',
+                background: selected ? '#E8FF00' : 'transparent',
+                border: `1px solid ${selected ? '#E8FF00' : '#222222'}`,
+                borderRadius: 0,
+                cursor: 'pointer',
+                color: selected ? '#000000' : '#888888',
+                fontFamily: "'Oswald', sans-serif",
+                fontWeight: 700,
+                fontSize: 20,
+                textAlign: 'center',
+              }}
+            >
+              {w}
+              <span style={{
+                display: 'block',
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 10,
+                fontWeight: 400,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                marginTop: 2,
+              }}>wks</span>
+            </button>
+          );
+        })}
       </div>
-      <button onClick={() => setStep(2)} className="w-full py-3.5 rounded-xl font-semibold btn-press" style={{ background: '#3b82f6', color: '#fff' }}>
-        Continue <ChevronRight size={18} className="inline ml-1" />
+      <button
+        onClick={() => setStep(2)}
+        className="btn-press"
+        style={{
+          width: '100%',
+          marginTop: 20,
+          padding: '14px 0',
+          background: '#E8FF00',
+          border: 'none',
+          borderRadius: 0,
+          fontFamily: "'Inter', sans-serif",
+          fontSize: 13,
+          fontWeight: 500,
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+          color: '#000000',
+          cursor: 'pointer',
+        }}
+      >
+        Continue
       </button>
     </div>,
 
     // Days per week
-    <div key={2} className="flex flex-col gap-5 animate-fade-in px-4">
-      <h2 className="text-xl font-bold" style={{ color: '#f1f5f9' }}>Days per week</h2>
-      <div className="flex gap-2">
-        {[2, 3, 4, 5, 6].map(d => (
-          <button
-            key={d}
-            onClick={() => update('daysPerWeek', d)}
-            className="flex-1 py-4 rounded-xl font-bold text-xl btn-press transition-all"
-            style={{
-              background: config.daysPerWeek === d ? '#3b82f6' : '#1e1e2a',
-              border: `1px solid ${config.daysPerWeek === d ? '#3b82f6' : '#2a2a3a'}`,
-              color: config.daysPerWeek === d ? '#fff' : '#94a3b8',
-            }}
-          >
-            {d}
-          </button>
-        ))}
+    <div key={2} className="animate-fade-in" style={{ padding: '0 16px' }}>
+      {stepCounter}
+      <h2 style={{
+        fontFamily: "'Oswald', sans-serif",
+        fontWeight: 700,
+        fontSize: 22,
+        textTransform: 'uppercase',
+        color: '#FFFFFF',
+        margin: '0 0 16px 0',
+      }}>Days per week</h2>
+      <div style={{ display: 'flex', gap: 8 }}>
+        {[2, 3, 4, 5, 6].map(d => {
+          const selected = config.daysPerWeek === d;
+          return (
+            <button
+              key={d}
+              onClick={() => update('daysPerWeek', d)}
+              className="btn-press"
+              style={{
+                flex: 1,
+                padding: '16px 0',
+                background: selected ? '#E8FF00' : 'transparent',
+                border: `1px solid ${selected ? '#E8FF00' : '#222222'}`,
+                borderRadius: 0,
+                cursor: 'pointer',
+                color: selected ? '#000000' : '#888888',
+                fontFamily: "'Oswald', sans-serif",
+                fontWeight: 700,
+                fontSize: 22,
+              }}
+            >
+              {d}
+            </button>
+          );
+        })}
       </div>
       {config.daysPerWeek && (
-        <div className="p-4 rounded-xl animate-fade-in" style={{ background: '#1e1e2a', border: '1px solid #2a2a3a' }}>
-          <p className="text-xs font-semibold mb-2" style={{ color: '#64748b' }}>RECOMMENDED SPLIT</p>
-          <div className="flex flex-wrap gap-2">
+        <div style={{
+          marginTop: 16,
+          padding: 16,
+          border: '1px solid #222222',
+        }}>
+          <p style={{
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 9,
+            fontWeight: 500,
+            textTransform: 'uppercase',
+            letterSpacing: '0.1em',
+            color: '#555555',
+            margin: '0 0 8px 0',
+          }}>RECOMMENDED SPLIT</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {(SPLITS[config.daysPerWeek] || []).map((day, i) => (
               <span
                 key={i}
-                className="px-3 py-1 rounded-full text-sm"
-                style={{ background: '#3b82f620', color: '#93c5fd' }}
+                style={{
+                  padding: '4px 12px',
+                  border: '1px solid #222222',
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: 12,
+                  color: '#888888',
+                }}
               >
                 {day.name}
               </span>
@@ -215,29 +335,67 @@ export default function BuildProgramme() {
           </div>
         </div>
       )}
-      <button onClick={() => setStep(3)} className="w-full py-3.5 rounded-xl font-semibold btn-press" style={{ background: '#3b82f6', color: '#fff' }}>
-        Continue <ChevronRight size={18} className="inline ml-1" />
+      <button
+        onClick={() => setStep(3)}
+        className="btn-press"
+        style={{
+          width: '100%',
+          marginTop: 20,
+          padding: '14px 0',
+          background: '#E8FF00',
+          border: 'none',
+          borderRadius: 0,
+          fontFamily: "'Inter', sans-serif",
+          fontSize: 13,
+          fontWeight: 500,
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+          color: '#000000',
+          cursor: 'pointer',
+        }}
+      >
+        Continue
       </button>
     </div>,
 
     // Which days
-    <div key={3} className="flex flex-col gap-5 animate-fade-in px-4">
-      <div>
-        <h2 className="text-xl font-bold" style={{ color: '#f1f5f9' }}>Which days?</h2>
-        <p className="text-sm mt-1" style={{ color: '#64748b' }}>Select {config.daysPerWeek} days</p>
+    <div key={3} className="animate-fade-in" style={{ padding: '0 16px' }}>
+      {stepCounter}
+      <div style={{ marginBottom: 16 }}>
+        <h2 style={{
+          fontFamily: "'Oswald', sans-serif",
+          fontWeight: 700,
+          fontSize: 22,
+          textTransform: 'uppercase',
+          color: '#FFFFFF',
+          margin: '0 0 4px 0',
+        }}>Which days?</h2>
+        <p style={{
+          fontFamily: "'Inter', sans-serif",
+          fontSize: 13,
+          color: '#888888',
+          margin: 0,
+        }}>Select {config.daysPerWeek} days</p>
       </div>
-      <div className="flex gap-2">
+      <div style={{ display: 'flex', gap: 6 }}>
         {DAYS.map(day => {
           const selected = config.selectedDays.includes(day);
           return (
             <button
               key={day}
               onClick={() => toggleDay(day)}
-              className="flex-1 py-3 rounded-xl text-sm font-semibold btn-press transition-all"
+              className="btn-press"
               style={{
-                background: selected ? '#3b82f6' : '#1e1e2a',
-                border: `1px solid ${selected ? '#3b82f6' : '#2a2a3a'}`,
-                color: selected ? '#fff' : '#64748b',
+                flex: 1,
+                padding: '12px 0',
+                background: selected ? '#E8FF00' : 'transparent',
+                border: `1px solid ${selected ? '#E8FF00' : '#222222'}`,
+                borderRadius: 0,
+                cursor: 'pointer',
+                color: selected ? '#000000' : '#555555',
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 12,
+                fontWeight: 500,
               }}
             >
               {day}
@@ -248,86 +406,179 @@ export default function BuildProgramme() {
       <button
         onClick={() => setStep(4)}
         disabled={config.selectedDays.length !== config.daysPerWeek}
-        className="w-full py-3.5 rounded-xl font-semibold btn-press"
+        className="btn-press"
         style={{
-          background: config.selectedDays.length === config.daysPerWeek ? '#3b82f6' : '#1e1e2a',
-          color: config.selectedDays.length === config.daysPerWeek ? '#fff' : '#475569',
-          border: config.selectedDays.length === config.daysPerWeek ? 'none' : '1px solid #2a2a3a',
+          width: '100%',
+          marginTop: 20,
+          padding: '14px 0',
+          background: config.selectedDays.length === config.daysPerWeek ? '#E8FF00' : 'transparent',
+          border: config.selectedDays.length === config.daysPerWeek ? 'none' : '1px solid #222222',
+          borderRadius: 0,
+          fontFamily: "'Inter', sans-serif",
+          fontSize: 13,
+          fontWeight: 500,
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+          color: config.selectedDays.length === config.daysPerWeek ? '#000000' : '#555555',
+          cursor: config.selectedDays.length === config.daysPerWeek ? 'pointer' : 'default',
         }}
       >
-        Continue <ChevronRight size={18} className="inline ml-1" />
+        Continue
       </button>
     </div>,
 
     // Style
-    <div key={4} className="flex flex-col gap-5 animate-fade-in px-4">
-      <h2 className="text-xl font-bold" style={{ color: '#f1f5f9' }}>Programme style</h2>
-      <div>
-        <p className="text-sm font-medium mb-2" style={{ color: '#94a3b8' }}>Progression model</p>
-        <div className="flex flex-col gap-2">
+    <div key={4} className="animate-fade-in" style={{ padding: '0 16px' }}>
+      {stepCounter}
+      <h2 style={{
+        fontFamily: "'Oswald', sans-serif",
+        fontWeight: 700,
+        fontSize: 22,
+        textTransform: 'uppercase',
+        color: '#FFFFFF',
+        margin: '0 0 20px 0',
+      }}>Programme style</h2>
+      <div style={{ marginBottom: 20 }}>
+        <p style={{
+          fontFamily: "'Inter', sans-serif",
+          fontSize: 9,
+          fontWeight: 500,
+          textTransform: 'uppercase',
+          letterSpacing: '0.1em',
+          color: '#555555',
+          margin: '0 0 8px 0',
+        }}>PROGRESSION MODEL</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {[
             { id: 'linear', label: 'Linear', sub: 'Add weight/reps each session' },
             { id: 'undulating', label: 'Undulating', sub: 'Vary intensity across sessions' },
             { id: 'auto', label: 'Auto (Claude decides)', sub: 'Best for your goal and experience' },
-          ].map(opt => (
-            <button
-              key={opt.id}
-              onClick={() => update('progression', opt.id)}
-              className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-left btn-press transition-all"
-              style={{
-                background: config.progression === opt.id ? '#1e2d4a' : '#1e1e2a',
-                border: `1px solid ${config.progression === opt.id ? '#3b82f6' : '#2a2a3a'}`,
-              }}
-            >
-              <div>
-                <div className="font-medium" style={{ color: '#f1f5f9' }}>{opt.label}</div>
-                <div className="text-xs" style={{ color: '#64748b' }}>{opt.sub}</div>
-              </div>
-              {config.progression === opt.id && <Check size={16} className="ml-auto" style={{ color: '#3b82f6' }} />}
-            </button>
-          ))}
+          ].map(opt => {
+            const selected = config.progression === opt.id;
+            return (
+              <button
+                key={opt.id}
+                onClick={() => update('progression', opt.id)}
+                className="btn-press"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: '14px 16px',
+                  background: selected ? '#E8FF00' : 'transparent',
+                  border: `1px solid ${selected ? '#E8FF00' : '#222222'}`,
+                  borderRadius: 0,
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <div style={{
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: 14,
+                    fontWeight: 500,
+                    color: selected ? '#000000' : '#FFFFFF',
+                  }}>{opt.label}</div>
+                  <div style={{
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: 12,
+                    color: selected ? '#000000' : '#555555',
+                    marginTop: 2,
+                  }}>{opt.sub}</div>
+                </div>
+                {selected && <Check size={16} style={{ color: '#000000' }} />}
+              </button>
+            );
+          })}
         </div>
       </div>
-      <div>
-        <p className="text-sm font-medium mb-2" style={{ color: '#94a3b8' }}>Deload week</p>
-        <div className="flex gap-2">
+      <div style={{ marginBottom: 20 }}>
+        <p style={{
+          fontFamily: "'Inter', sans-serif",
+          fontSize: 9,
+          fontWeight: 500,
+          textTransform: 'uppercase',
+          letterSpacing: '0.1em',
+          color: '#555555',
+          margin: '0 0 8px 0',
+        }}>DELOAD WEEK</p>
+        <div style={{ display: 'flex', gap: 8 }}>
           {[
             { id: 'yes', label: 'Every 4 weeks' },
             { id: 'no', label: 'No' },
             { id: 'auto', label: 'Auto' },
-          ].map(opt => (
-            <button
-              key={opt.id}
-              onClick={() => update('deload', opt.id)}
-              className="flex-1 py-2.5 px-2 rounded-xl text-sm font-medium btn-press transition-all"
-              style={{
-                background: config.deload === opt.id ? '#1e2d4a' : '#1e1e2a',
-                border: `1px solid ${config.deload === opt.id ? '#3b82f6' : '#2a2a3a'}`,
-                color: config.deload === opt.id ? '#93c5fd' : '#94a3b8',
-              }}
-            >
-              {opt.label}
-            </button>
-          ))}
+          ].map(opt => {
+            const selected = config.deload === opt.id;
+            return (
+              <button
+                key={opt.id}
+                onClick={() => update('deload', opt.id)}
+                className="btn-press"
+                style={{
+                  flex: 1,
+                  padding: '10px 8px',
+                  background: selected ? '#E8FF00' : 'transparent',
+                  border: `1px solid ${selected ? '#E8FF00' : '#222222'}`,
+                  borderRadius: 0,
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: 12,
+                  fontWeight: 500,
+                  color: selected ? '#000000' : '#888888',
+                  cursor: 'pointer',
+                }}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
         </div>
       </div>
       <button
         onClick={generateOverview}
-        className="w-full py-4 rounded-xl font-bold btn-press"
-        style={{ background: '#3b82f6', color: '#fff' }}
+        className="btn-press"
+        style={{
+          width: '100%',
+          padding: '16px 0',
+          background: '#E8FF00',
+          border: 'none',
+          borderRadius: 0,
+          fontFamily: "'Inter', sans-serif",
+          fontSize: 13,
+          fontWeight: 500,
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+          color: '#000000',
+          cursor: 'pointer',
+        }}
       >
-        Build My Programme 🚀
+        Build My Programme
       </button>
     </div>,
 
     // Review & Activate
-    <div key={5} className="flex flex-col gap-4 animate-fade-in px-4 pb-8">
-      <h2 className="text-xl font-bold" style={{ color: '#f1f5f9' }}>Review &amp; Activate</h2>
+    <div key={5} className="animate-fade-in" style={{ padding: '0 16px 32px' }}>
+      {stepCounter}
+      <h2 style={{
+        fontFamily: "'Oswald', sans-serif",
+        fontWeight: 700,
+        fontSize: 22,
+        textTransform: 'uppercase',
+        color: '#FFFFFF',
+        margin: '0 0 16px 0',
+      }}>Review &amp; Activate</h2>
 
       {/* Schedule */}
-      <div className="p-4 rounded-xl" style={{ background: '#1e1e2a', border: '1px solid #2a2a3a' }}>
-        <p className="text-xs font-semibold mb-2" style={{ color: '#64748b' }}>WEEKLY SCHEDULE</p>
-        <div className="flex gap-1">
+      <div style={{ padding: 16, border: '1px solid #222222', marginBottom: 16 }}>
+        <p style={{
+          fontFamily: "'Inter', sans-serif",
+          fontSize: 9,
+          fontWeight: 500,
+          textTransform: 'uppercase',
+          letterSpacing: '0.1em',
+          color: '#555555',
+          margin: '0 0 8px 0',
+        }}>WEEKLY SCHEDULE</p>
+        <div style={{ display: 'flex', gap: 4 }}>
           {DAYS.map(day => {
             const dayIndex = config.selectedDays.indexOf(day);
             const split = SPLITS[config.daysPerWeek] || [];
@@ -335,19 +586,33 @@ export default function BuildProgramme() {
             return (
               <div
                 key={day}
-                className="flex-1 flex flex-col items-center py-2 rounded-lg"
                 style={{
-                  background: session ? '#1e2d4a' : '#1a1a24',
-                  border: `1px solid ${session ? '#3b82f640' : '#2a2a3a'}`,
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  padding: '8px 0',
+                  border: `1px solid ${session ? '#E8FF00' : '#222222'}`,
+                  background: session ? 'rgba(232,255,0,0.05)' : 'transparent',
                 }}
               >
-                <span className="text-xs" style={{ color: session ? '#93c5fd' : '#475569' }}>{day}</span>
+                <span style={{
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: 10,
+                  color: session ? '#E8FF00' : '#555555',
+                }}>{day}</span>
                 {session && (
-                  <span className="text-xs font-semibold mt-0.5" style={{ color: '#3b82f6' }}>
+                  <span style={{
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: 9,
+                    fontWeight: 500,
+                    color: '#FFFFFF',
+                    marginTop: 2,
+                  }}>
                     {session.name.split(' ')[0]}
                   </span>
                 )}
-                {!session && <span className="text-xs" style={{ color: '#2a2a3a' }}>—</span>}
+                {!session && <span style={{ fontSize: 10, color: '#333333' }}>--</span>}
               </div>
             );
           })}
@@ -356,37 +621,88 @@ export default function BuildProgramme() {
 
       {/* Overview */}
       {overview && (
-        <div className="p-4 rounded-xl" style={{ background: '#1e2d4a', border: '1px solid #3b82f640' }}>
-          <p className="text-xs font-bold mb-2" style={{ color: '#3b82f6' }}>FROM YOUR TRAINER</p>
-          <p className="text-sm leading-relaxed" style={{ color: '#cbd5e1' }}>{overview}</p>
+        <div style={{
+          padding: 16,
+          borderLeft: '2px solid #E8FF00',
+          marginBottom: 16,
+          background: '#111111',
+        }}>
+          <p style={{
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 9,
+            fontWeight: 500,
+            textTransform: 'uppercase',
+            letterSpacing: '0.1em',
+            color: '#E8FF00',
+            margin: '0 0 8px 0',
+          }}>FROM YOUR TRAINER</p>
+          <p style={{
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 13,
+            lineHeight: 1.6,
+            color: '#888888',
+            margin: 0,
+          }}>{overview}</p>
         </div>
       )}
 
       {/* Name */}
-      <div>
-        <label className="text-sm font-medium mb-1.5 block" style={{ color: '#94a3b8' }}>Programme name (optional)</label>
+      <div style={{ marginBottom: 16 }}>
+        <label style={{
+          fontFamily: "'Inter', sans-serif",
+          fontSize: 9,
+          fontWeight: 500,
+          textTransform: 'uppercase',
+          letterSpacing: '0.1em',
+          color: '#555555',
+          display: 'block',
+          marginBottom: 6,
+        }}>Programme name (optional)</label>
         <input
           type="text"
           placeholder={`${config.daysPerWeek}-Day ${config.goal} — ${config.weeks} Weeks`}
           value={config.name}
           onChange={e => update('name', e.target.value)}
-          className="w-full px-4 py-3 rounded-xl text-base outline-none"
-          style={{ background: '#1e1e2a', border: '1px solid #2a2a3a', color: '#f1f5f9' }}
+          style={{
+            width: '100%',
+            padding: '12px 16px',
+            background: '#111111',
+            border: '1px solid #222222',
+            borderRadius: 0,
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 14,
+            color: '#FFFFFF',
+            outline: 'none',
+            boxSizing: 'border-box',
+          }}
         />
       </div>
 
       <button
         onClick={activate}
-        className="w-full py-4 rounded-xl font-bold text-base btn-press"
-        style={{ background: '#10b981', color: '#fff' }}
+        className="btn-press"
+        style={{
+          width: '100%',
+          padding: '16px 0',
+          background: '#E8FF00',
+          border: 'none',
+          borderRadius: 0,
+          fontFamily: "'Inter', sans-serif",
+          fontSize: 13,
+          fontWeight: 500,
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+          color: '#000000',
+          cursor: 'pointer',
+        }}
       >
-        Activate Programme ✓
+        Activate Programme
       </button>
     </div>,
   ];
 
   return (
-    <div className="flex flex-col min-h-screen max-w-[430px] mx-auto pb-8">
+    <div className="flex flex-col min-h-screen max-w-[430px] mx-auto pb-8" style={{ background: '#0A0A0A' }}>
       <ScreenHeader
         title="Build Programme"
         progress={(step + 1) / totalSteps}
