@@ -1,21 +1,21 @@
 import { useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { Eye, EyeOff, CheckCircle, XCircle, Check, X } from 'lucide-react';
+import { Eye, EyeOff, Check, X } from 'lucide-react';
 import { auth as authApi } from '../services/api';
 
 function getStrength(pw) {
-  if (!pw) return { score: 0, label: '', color: '#2a2a3a' };
+  if (!pw) return { score: 0, label: '', color: '#222222' };
   let score = 0;
   if (pw.length >= 8) score++;
   if (/[A-Z]/.test(pw)) score++;
   if (/[0-9]/.test(pw)) score++;
   if (/[^A-Za-z0-9]/.test(pw)) score++;
   if (pw.length >= 12) score++;
-  if (score <= 1) return { score, label: 'Weak', color: '#ef4444' };
-  if (score === 2) return { score, label: 'Fair', color: '#f97316' };
-  if (score === 3) return { score, label: 'Good', color: '#eab308' };
-  if (score === 4) return { score, label: 'Strong', color: '#3b82f6' };
-  return { score, label: 'Very strong', color: '#10b981' };
+  if (score <= 1) return { score, label: 'Weak', color: '#EF4444' };
+  if (score === 2) return { score, label: 'Fair', color: '#F59E0B' };
+  if (score === 3) return { score, label: 'Good', color: '#F59E0B' };
+  if (score === 4) return { score, label: 'Strong', color: '#E8FF00' };
+  return { score, label: 'Very strong', color: '#22C55E' };
 }
 
 export default function ResetPasswordScreen() {
@@ -56,40 +56,47 @@ export default function ResetPasswordScreen() {
 
   if (!token) return (
     <Screen>
-      <XCircle size={48} color="#ef4444" />
+      <div style={{ fontSize: 48, color: '#EF4444', fontWeight: 700, fontFamily: "'Oswald', sans-serif" }}>&#10007;</div>
       <h1 style={headStyle}>Invalid link</h1>
-      <p style={{ color: '#94a3b8', margin: '8px 0 20px' }}>This reset link is invalid.</p>
+      <p style={{ color: '#888888', margin: '8px 0 20px', fontFamily: "'Inter', sans-serif", fontSize: 15 }}>This reset link is invalid.</p>
       <Link to="/forgot-password" style={linkStyle}>Request a new reset link</Link>
     </Screen>
   );
 
   if (status === 'success') return (
     <Screen>
-      <CheckCircle size={48} color="#10b981" />
+      <div style={{ fontSize: 48, color: '#E8FF00', fontWeight: 700, fontFamily: "'Oswald', sans-serif" }}>&#10003;</div>
       <h1 style={headStyle}>Password reset!</h1>
-      <p style={{ color: '#94a3b8', margin: '8px 0 20px' }}>You can now log in with your new password.</p>
-      <Link to="/login" style={linkStyle}>Go to login →</Link>
+      <p style={{ color: '#888888', margin: '8px 0 20px', fontFamily: "'Inter', sans-serif", fontSize: 15 }}>You can now log in with your new password.</p>
+      <Link to="/login" style={linkStyle}>Go to login</Link>
     </Screen>
   );
 
   if (status === 'error') return (
     <Screen>
-      <XCircle size={48} color="#ef4444" />
+      <div style={{ fontSize: 48, color: '#EF4444', fontWeight: 700, fontFamily: "'Oswald', sans-serif" }}>&#10007;</div>
       <h1 style={headStyle}>{errCode === 'EXPIRED' ? 'Link expired' : 'Link already used'}</h1>
-      <p style={{ color: '#94a3b8', margin: '8px 0 20px', maxWidth: 320, textAlign: 'center' }}>{errMsg}</p>
+      <p style={{ color: '#888888', margin: '8px 0 20px', maxWidth: 320, textAlign: 'center', fontFamily: "'Inter', sans-serif", fontSize: 15 }}>{errMsg}</p>
       <Link to="/forgot-password" style={linkStyle}>Request a new reset link</Link>
     </Screen>
   );
 
   return (
-    <div style={{ background: '#0f0f14', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}>
+    <div style={{ background: '#0A0A0A', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}>
       <div style={{ width: '100%', maxWidth: 400 }}>
-        <div style={{ background: '#1e1e2a', border: '1px solid #2a2a3a', borderRadius: 16, padding: '32px 28px' }}>
-          <h1 style={{ margin: '0 0 8px', color: '#f1f5f9', fontSize: 22, fontWeight: 700 }}>Set new password</h1>
-          <p style={{ margin: '0 0 28px', color: '#64748b', fontSize: 14 }}>Choose a strong password for your account.</p>
+        {/* Logo */}
+        <div style={{ textAlign: 'center', marginBottom: 36 }}>
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 24, fontWeight: 700, color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: 2 }}>
+            Pocket Trainer<span style={{ color: '#E8FF00' }}>.</span>
+          </div>
+        </div>
+
+        <div style={{ background: '#111111', border: '1px solid #222222', borderRadius: 0, padding: 24 }}>
+          <h1 style={{ margin: '0 0 8px', color: '#FFFFFF', fontSize: 22, fontWeight: 700, fontFamily: "'Oswald', sans-serif", textTransform: 'uppercase', letterSpacing: 1 }}>Set new password</h1>
+          <p style={{ margin: '0 0 28px', color: '#888888', fontSize: 14, fontFamily: "'Inter', sans-serif" }}>Choose a strong password for your account.</p>
 
           {errMsg && (
-            <div style={{ background: '#1a1a2e', border: '1px solid #ef4444', borderRadius: 10, padding: '12px 16px', marginBottom: 20, fontSize: 14, color: '#ef4444' }}>
+            <div style={{ background: '#0A0A0A', border: '1px solid #EF4444', borderRadius: 0, padding: '12px 16px', marginBottom: 20, fontSize: 12, color: '#EF4444', fontFamily: "'Inter', sans-serif" }}>
               {errMsg}
             </div>
           )}
@@ -101,25 +108,26 @@ export default function ResetPasswordScreen() {
                 <input type={showPw ? 'text' : 'password'} value={form.password}
                   onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
                   required autoComplete="new-password"
-                  style={{ ...inputStyle, paddingRight: 44 }} placeholder="••••••••" />
+                  style={{ ...inputStyle, paddingRight: 44 }} placeholder="--------" />
                 <button type="button" onClick={() => setShowPw(s => !s)} style={eyeBtn}>
-                  {showPw ? <EyeOff size={18} color="#64748b" /> : <Eye size={18} color="#64748b" />}
+                  {showPw ? <EyeOff size={18} color="#555555" /> : <Eye size={18} color="#555555" />}
                 </button>
               </div>
             </div>
 
             {form.password && (
               <>
-                <div style={{ display: 'flex', gap: 4, marginBottom: 6 }}>
+                <div style={{ display: 'flex', gap: 3, marginBottom: 6 }}>
                   {[1,2,3,4,5].map(i => (
-                    <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i <= strength.score ? strength.color : '#2a2a3a', transition: 'background 0.2s' }} />
+                    <div key={i} style={{ flex: 1, height: 3, borderRadius: 0, background: i <= strength.score ? strength.color : '#222222', transition: 'background 0.2s' }} />
                   ))}
                 </div>
-                <div style={{ background: '#0f0f14', borderRadius: 8, padding: '10px 12px', marginBottom: 16 }}>
+                <span style={{ fontSize: 11, color: strength.color, fontWeight: 500, fontFamily: "'Inter', sans-serif", textTransform: 'uppercase', letterSpacing: 1, display: 'block', marginBottom: 8 }}>{strength.label}</span>
+                <div style={{ background: '#0A0A0A', borderRadius: 0, padding: '10px 12px', marginBottom: 16 }}>
                   {rules.map(r => (
                     <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                      {r.ok ? <Check size={13} color="#10b981" /> : <X size={13} color="#475569" />}
-                      <span style={{ fontSize: 12, color: r.ok ? '#10b981' : '#475569' }}>{r.label}</span>
+                      {r.ok ? <Check size={13} color="#22C55E" /> : <X size={13} color="#555555" />}
+                      <span style={{ fontSize: 11, color: r.ok ? '#22C55E' : '#555555', fontFamily: "'Inter', sans-serif" }}>{r.label}</span>
                     </div>
                   ))}
                 </div>
@@ -130,11 +138,11 @@ export default function ResetPasswordScreen() {
               <label style={labelStyle}>Confirm password</label>
               <input type="password" value={form.confirm}
                 onChange={e => setForm(f => ({ ...f, confirm: e.target.value }))}
-                required autoComplete="new-password" style={inputStyle} placeholder="••••••••" />
+                required autoComplete="new-password" style={inputStyle} placeholder="--------" />
             </div>
 
             <button type="submit" disabled={loading} style={submitBtn(loading)}>
-              {loading ? 'Saving…' : 'Reset password'}
+              {loading ? 'Saving...' : 'Reset password'}
             </button>
           </form>
         </div>
@@ -145,24 +153,32 @@ export default function ResetPasswordScreen() {
 
 function Screen({ children }) {
   return (
-    <div style={{ background: '#0f0f14', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12, textAlign: 'center' }}>
+    <div style={{ background: '#0A0A0A', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12, textAlign: 'center' }}>
       {children}
     </div>
   );
 }
 
-const headStyle  = { margin: 0, color: '#f1f5f9', fontSize: 22, fontWeight: 700 };
-const linkStyle  = { color: '#3b82f6', textDecoration: 'none', fontWeight: 600, fontSize: 14 };
-const labelStyle = { display: 'block', fontSize: 13, fontWeight: 600, color: '#94a3b8', marginBottom: 6 };
+const headStyle  = { margin: 0, color: '#FFFFFF', fontSize: 22, fontWeight: 700, fontFamily: "'Oswald', sans-serif", textTransform: 'uppercase', letterSpacing: 1 };
+const linkStyle  = { color: '#555555', textDecoration: 'none', fontWeight: 500, fontSize: 13, fontFamily: "'Inter', sans-serif" };
+const labelStyle = {
+  display: 'block', fontSize: 11, fontWeight: 400, color: '#555555', marginBottom: 8,
+  fontFamily: "'Inter', sans-serif", textTransform: 'uppercase', letterSpacing: 2,
+};
 const inputStyle = {
-  width: '100%', padding: '11px 14px', background: '#0f0f14', border: '1px solid #2a2a3a',
-  borderRadius: 10, color: '#f1f5f9', fontSize: 15, outline: 'none', boxSizing: 'border-box',
+  width: '100%', height: 48, padding: '0 14px', background: '#0A0A0A',
+  border: 'none', borderBottom: '1px solid #222222', borderRadius: 0,
+  color: '#FFFFFF', fontSize: 15, outline: 'none', boxSizing: 'border-box',
+  fontFamily: "'Inter', sans-serif", transition: 'border-color 0.2s',
 };
 const eyeBtn = {
   position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
   background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex',
 };
 const submitBtn = (loading) => ({
-  width: '100%', padding: '13px', background: '#3b82f6', color: '#fff', border: 'none',
-  borderRadius: 10, fontSize: 15, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1,
+  width: '100%', height: 52, background: loading ? '#222222' : '#E8FF00',
+  color: loading ? '#555555' : '#000000', border: 'none', borderRadius: 0,
+  fontSize: 14, fontWeight: 700, fontFamily: "'Oswald', sans-serif",
+  textTransform: 'uppercase', letterSpacing: 2,
+  cursor: loading ? 'not-allowed' : 'pointer', transition: 'background 0.2s',
 });

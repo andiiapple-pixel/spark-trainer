@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { auth as authApi } from '../services/api';
 
 export default function ForgotPasswordScreen() {
@@ -20,13 +20,13 @@ export default function ForgotPasswordScreen() {
   if (done) {
     return (
       <Screen>
-        <CheckCircle size={48} color="#10b981" />
-        <h1 style={{ margin: '0 0 8px', color: '#f1f5f9', fontSize: 22, fontWeight: 700 }}>Check your email</h1>
-        <p style={{ margin: '0 0 24px', color: '#94a3b8', fontSize: 15, lineHeight: 1.6, maxWidth: 320 }}>
-          If an account exists for <strong style={{ color: '#f1f5f9' }}>{email}</strong>, we've sent a password reset link.
+        <div style={{ fontSize: 48, color: '#E8FF00', fontWeight: 700, fontFamily: "'Oswald', sans-serif" }}>&#10003;</div>
+        <h1 style={{ margin: '0 0 8px', color: '#FFFFFF', fontSize: 22, fontWeight: 700, fontFamily: "'Oswald', sans-serif", textTransform: 'uppercase', letterSpacing: 1 }}>Check your email</h1>
+        <p style={{ margin: '0 0 24px', color: '#888888', fontSize: 15, lineHeight: 1.6, maxWidth: 320, fontFamily: "'Inter', sans-serif" }}>
+          If an account exists for <strong style={{ color: '#FFFFFF' }}>{email}</strong>, we've sent a password reset link.
           It expires in 1 hour.
         </p>
-        <Link to="/login" style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#3b82f6', textDecoration: 'none', fontWeight: 600, fontSize: 14 }}>
+        <Link to="/login" style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#555555', textDecoration: 'none', fontWeight: 500, fontSize: 13, fontFamily: "'Inter', sans-serif" }}>
           <ArrowLeft size={16} /> Back to login
         </Link>
       </Screen>
@@ -35,14 +35,14 @@ export default function ForgotPasswordScreen() {
 
   return (
     <Screen>
-      <div style={{ width: '100%', maxWidth: 380 }}>
-        <Link to="/login" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#64748b', textDecoration: 'none', fontSize: 14, marginBottom: 28 }}>
+      <div style={{ width: '100%', maxWidth: 400 }}>
+        <Link to="/login" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#555555', textDecoration: 'none', fontSize: 13, marginBottom: 28, fontFamily: "'Inter', sans-serif" }}>
           <ArrowLeft size={16} /> Back to login
         </Link>
 
-        <div style={{ background: '#1e1e2a', border: '1px solid #2a2a3a', borderRadius: 16, padding: '32px 28px' }}>
-          <h1 style={{ margin: '0 0 8px', color: '#f1f5f9', fontSize: 22, fontWeight: 700 }}>Forgot password?</h1>
-          <p style={{ margin: '0 0 28px', color: '#64748b', fontSize: 14, lineHeight: 1.5 }}>
+        <div style={{ background: '#111111', border: '1px solid #222222', borderRadius: 0, padding: 24 }}>
+          <h1 style={{ margin: '0 0 8px', color: '#FFFFFF', fontSize: 22, fontWeight: 700, fontFamily: "'Oswald', sans-serif", textTransform: 'uppercase', letterSpacing: 1 }}>Forgot password?</h1>
+          <p style={{ margin: '0 0 28px', color: '#888888', fontSize: 14, lineHeight: 1.5, fontFamily: "'Inter', sans-serif" }}>
             Enter your email and we'll send you a reset link.
           </p>
 
@@ -58,7 +58,7 @@ export default function ForgotPasswordScreen() {
               placeholder="you@example.com"
             />
             <button type="submit" disabled={loading} style={submitBtn(loading)}>
-              {loading ? 'Sending…' : 'Send reset link'}
+              {loading ? 'Sending...' : 'Send reset link'}
             </button>
           </form>
         </div>
@@ -69,18 +69,26 @@ export default function ForgotPasswordScreen() {
 
 function Screen({ children }) {
   return (
-    <div style={{ background: '#0f0f14', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+    <div style={{ background: '#0A0A0A', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       {children}
     </div>
   );
 }
 
-const labelStyle = { display: 'block', fontSize: 13, fontWeight: 600, color: '#94a3b8', marginBottom: 6 };
+const labelStyle = {
+  display: 'block', fontSize: 11, fontWeight: 400, color: '#555555', marginBottom: 8,
+  fontFamily: "'Inter', sans-serif", textTransform: 'uppercase', letterSpacing: 2,
+};
 const inputStyle = {
-  width: '100%', padding: '11px 14px', background: '#0f0f14', border: '1px solid #2a2a3a',
-  borderRadius: 10, color: '#f1f5f9', fontSize: 15, outline: 'none', boxSizing: 'border-box',
+  width: '100%', height: 48, padding: '0 14px', background: '#0A0A0A',
+  border: 'none', borderBottom: '1px solid #222222', borderRadius: 0,
+  color: '#FFFFFF', fontSize: 15, outline: 'none', boxSizing: 'border-box',
+  fontFamily: "'Inter', sans-serif",
 };
 const submitBtn = (loading) => ({
-  width: '100%', padding: '13px', background: '#3b82f6', color: '#fff', border: 'none',
-  borderRadius: 10, fontSize: 15, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1,
+  width: '100%', height: 52, background: loading ? '#222222' : '#E8FF00',
+  color: loading ? '#555555' : '#000000', border: 'none', borderRadius: 0,
+  fontSize: 14, fontWeight: 700, fontFamily: "'Oswald', sans-serif",
+  textTransform: 'uppercase', letterSpacing: 2,
+  cursor: loading ? 'not-allowed' : 'pointer', transition: 'background 0.2s',
 });

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { CheckCircle, XCircle, Loader } from 'lucide-react';
+import { Loader } from 'lucide-react';
 import { auth as authApi } from '../services/api';
 import { useAuth } from '../auth/AuthContext';
 import { setAccessToken, setRefreshToken } from '../services/api';
@@ -43,23 +43,23 @@ export default function VerifyEmailScreen() {
 
   if (status === 'loading') return (
     <Screen>
-      <Loader size={40} color="#3b82f6" style={{ animation: 'spin 1s linear infinite' }} />
+      <Loader size={40} color="#E8FF00" style={{ animation: 'spin 1s linear infinite' }} />
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      <p style={textStyle}>Verifying your email…</p>
+      <p style={textStyle}>Verifying your email...</p>
     </Screen>
   );
 
   if (status === 'success') return (
     <Screen>
-      <CheckCircle size={48} color="#10b981" />
+      <div style={{ fontSize: 48, color: '#E8FF00', fontWeight: 700, fontFamily: "'Oswald', sans-serif" }}>&#10003;</div>
       <h1 style={headStyle}>Email verified!</h1>
-      <p style={textStyle}>Redirecting you to the app…</p>
+      <p style={textStyle}>Redirecting you to the app...</p>
     </Screen>
   );
 
   if (status === 'resent') return (
     <Screen>
-      <CheckCircle size={48} color="#3b82f6" />
+      <div style={{ fontSize: 48, color: '#E8FF00', fontWeight: 700, fontFamily: "'Oswald', sans-serif" }}>&#10003;</div>
       <h1 style={headStyle}>Email sent</h1>
       <p style={textStyle}>A new verification link has been sent. Check your inbox.</p>
       <Link to="/login" style={linkStyle}>Back to login</Link>
@@ -72,7 +72,7 @@ export default function VerifyEmailScreen() {
 
   return (
     <Screen>
-      <XCircle size={48} color="#ef4444" />
+      <div style={{ fontSize: 48, color: '#EF4444', fontWeight: 700, fontFamily: "'Oswald', sans-serif" }}>&#10007;</div>
       <h1 style={headStyle}>{isUsed ? 'Already verified' : 'Link invalid or expired'}</h1>
       <p style={textStyle}>
         {isUsed
@@ -83,15 +83,18 @@ export default function VerifyEmailScreen() {
       </p>
 
       {(isExpired || !isUsed) && (
-        <div style={{ width: '100%', maxWidth: 320, marginTop: 8 }}>
-          <input
-            type="email"
-            placeholder="Enter your email to resend"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            style={inputStyle}
-          />
-          <button onClick={resend} style={btnStyle}>Resend verification email</button>
+        <div style={{ width: '100%', maxWidth: 400, marginTop: 8 }}>
+          <div style={{ background: '#111111', border: '1px solid #222222', borderRadius: 0, padding: 24 }}>
+            <label style={inputLabelStyle}>Email</label>
+            <input
+              type="email"
+              placeholder="Enter your email to resend"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              style={inputStyle}
+            />
+            <button onClick={resend} style={btnStyle}>Resend verification email</button>
+          </div>
         </div>
       )}
       <Link to="/login" style={{ ...linkStyle, marginTop: 12 }}>Back to login</Link>
@@ -101,20 +104,27 @@ export default function VerifyEmailScreen() {
 
 function Screen({ children }) {
   return (
-    <div style={{ background: '#0f0f14', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, gap: 16, textAlign: 'center' }}>
+    <div style={{ background: '#0A0A0A', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, gap: 16, textAlign: 'center' }}>
       {children}
     </div>
   );
 }
 
-const headStyle  = { margin: 0, color: '#f1f5f9', fontSize: 22, fontWeight: 700 };
-const textStyle  = { margin: 0, color: '#94a3b8', fontSize: 15, lineHeight: 1.6 };
-const linkStyle  = { color: '#3b82f6', textDecoration: 'none', fontWeight: 600, fontSize: 14 };
+const headStyle  = { margin: 0, color: '#FFFFFF', fontSize: 22, fontWeight: 700, fontFamily: "'Oswald', sans-serif", textTransform: 'uppercase', letterSpacing: 1 };
+const textStyle  = { margin: 0, color: '#888888', fontSize: 15, lineHeight: 1.6, fontFamily: "'Inter', sans-serif" };
+const linkStyle  = { color: '#555555', textDecoration: 'none', fontWeight: 500, fontSize: 13, fontFamily: "'Inter', sans-serif" };
+const inputLabelStyle = {
+  display: 'block', fontSize: 11, fontWeight: 400, color: '#555555', marginBottom: 8,
+  fontFamily: "'Inter', sans-serif", textTransform: 'uppercase', letterSpacing: 2,
+};
 const inputStyle = {
-  width: '100%', padding: '11px 14px', background: '#1e1e2a', border: '1px solid #2a2a3a',
-  borderRadius: 10, color: '#f1f5f9', fontSize: 15, outline: 'none', boxSizing: 'border-box', marginBottom: 10,
+  width: '100%', height: 48, padding: '0 14px', background: '#0A0A0A',
+  border: 'none', borderBottom: '1px solid #222222', borderRadius: 0,
+  color: '#FFFFFF', fontSize: 15, outline: 'none', boxSizing: 'border-box',
+  fontFamily: "'Inter', sans-serif", marginBottom: 16,
 };
 const btnStyle = {
-  width: '100%', padding: '12px', background: '#3b82f6', color: '#fff', border: 'none',
-  borderRadius: 10, fontSize: 15, fontWeight: 600, cursor: 'pointer',
+  width: '100%', height: 52, background: '#E8FF00', color: '#000000', border: 'none',
+  borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: 'pointer',
+  fontFamily: "'Oswald', sans-serif", textTransform: 'uppercase', letterSpacing: 2,
 };
