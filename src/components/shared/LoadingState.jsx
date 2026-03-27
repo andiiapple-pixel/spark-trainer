@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Dumbbell } from 'lucide-react';
 
 const QUOTES = [
   "Calculating your optimal training load...",
@@ -24,36 +23,51 @@ export default function LoadingState({ message }) {
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center gap-6 px-6 py-16 animate-fade-in">
-      <div className="relative">
-        <div
-          className="w-20 h-20 rounded-full flex items-center justify-center"
-          style={{ background: '#1e1e2a', border: '2px solid #3b82f6' }}
-        >
-          <Dumbbell size={36} style={{ color: '#3b82f6' }} className="animate-pulse-slow" />
-        </div>
-        <div
-          className="absolute inset-0 rounded-full border-2 border-t-transparent"
-          style={{
-            borderColor: '#3b82f630',
-            borderTopColor: '#3b82f6',
-            animation: 'spin 1.2s linear infinite',
-          }}
-        />
-      </div>
-      <div className="text-center">
-        <p className="font-semibold mb-2" style={{ color: '#f1f5f9' }}>
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 24,
+      padding: '64px 24px',
+      flex: 1,
+    }}>
+      {/* Spinner */}
+      <div style={{
+        width: 24,
+        height: 24,
+        border: '2px solid #222222',
+        borderTopColor: '#E8FF00',
+        borderRadius: 0,
+        animation: 'editorial-spin 0.8s linear infinite',
+      }} />
+
+      <div style={{ textAlign: 'center' }}>
+        <p style={{
+          fontFamily: "'Inter', sans-serif",
+          fontSize: 12,
+          fontWeight: 500,
+          textTransform: 'uppercase',
+          letterSpacing: '0.1em',
+          color: '#555555',
+          margin: '0 0 8px 0',
+        }}>
           {message || 'Your trainer is working on it...'}
         </p>
         <p
-          className="text-sm transition-all duration-500"
-          style={{ color: '#64748b' }}
+          style={{
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 11,
+            color: '#555555',
+            margin: 0,
+            transition: 'opacity 0.3s ease',
+          }}
           key={quoteIndex}
         >
           {QUOTES[quoteIndex]}
         </p>
       </div>
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      <style>{`@keyframes editorial-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
