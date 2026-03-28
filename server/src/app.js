@@ -10,6 +10,7 @@ const accountRoutes   = require('./routes/account');
 const dataRoutes      = require('./routes/data');
 const exerciseRoutes  = require('./routes/exercises');
 const recoveryRoutes  = require('./routes/recovery');
+const aiRoutes        = require('./routes/ai');
 
 const app = express();
 
@@ -46,6 +47,7 @@ app.use('/api/account',   accountRoutes);
 app.use('/api/data',      dataRoutes);
 app.use('/api/exercises', exerciseRoutes);
 app.use('/api/recovery',  recoveryRoutes);
+app.use('/api/ai',        aiRoutes);
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => res.json({ ok: true }));

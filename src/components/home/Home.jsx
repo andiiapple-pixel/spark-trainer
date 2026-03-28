@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Zap } from 'lucide-react';
 import { storage, getMotivationalLine, getWeeklyWorkoutCount, getCurrentStreak } from '../../utils/storage';
+import { useAuth } from '../../auth/AuthContext';
 import { useActiveWorkout } from '../../context/ActiveWorkoutContext';
-import RecoveryCheckin from '../recovery/RecoveryCheckin';
+import { RecoveryCheckinOnce } from '../recovery/RecoveryCheckin';
+import { recovery as recoveryApi } from '../../services/api';
 import { generateDailyMessage } from '../../api/anthropic';
 
 function getDeloadSuggestion(history) {
@@ -25,6 +27,7 @@ function getDeloadSuggestion(history) {
 
 export default function Home() {
   const navigate = useNavigate();
+  const { profile: authProfile } = useAuth();
   const ctx = useActiveWorkout();
   const [deloadDismissed, setDeloadDismissed] = useState(
     () => localStorage.getItem('spark_deload_dismissed') === new Date().toDateString()
@@ -40,7 +43,30 @@ export default function Home() {
     return null;
   });
 
-  const profile = storage.getProfile();
+  const [recoveryScore, setRecoveryScore] = useState(null);
+  const [showCustomConfirm, setShowCustomConfirm] = useState(false);
+  const [showSavedToast, setShowSavedToast] = useState(() => {
+    if (sessionStorage.getItem('spark_workout_saved')) {
+      sessionStorage.removeItem('spark_workout_saved');
+      return true;
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (showSavedToast) {
+      const t = setTimeout(() => setShowSavedToast(false), 4000);
+      return () => clearTimeout(t);
+    }
+  }, [showSavedToast]);
+
+  useEffect(() => {
+    recoveryApi.getToday()
+      .then(r => { if (r.log) setRecoveryScore(r.log.recovery_score); })
+      .catch(() => {});
+  }, []);
+
+  const profile = authProfile || storage.getProfile();
   const history = storage.getWorkoutHistory();
   const programme = storage.getActiveProgramme();
   const { hasActiveWorkout, workout: activeWkt, status: activeStatus } = ctx;
@@ -90,6 +116,8 @@ export default function Home() {
         ctx.clearActiveWorkout();
         navigate('/new-workout');
       }
+    } else if (programme) {
+      setShowCustomConfirm(true);
     } else {
       navigate('/new-workout');
     }
@@ -98,6 +126,8 @@ export default function Home() {
   function resumeActiveWorkout() {
     if (activeStatus === 'in_progress') {
       navigate('/workout/active');
+    } else if (activeWkt?.programmeDay !== undefined) {
+      navigate('/programme/continue');
     } else {
       navigate('/new-workout');
     }
@@ -123,6 +153,63 @@ export default function Home() {
       className="flex flex-col min-h-screen max-w-[430px] mx-auto pb-24"
       style={{ background: '#0A0A0A' }}
     >
+      {/* Workout saved toast */}
+      {showSavedToast && (
+        <div
+          className="fixed top-0 left-0 right-0 z-50 flex justify-center animate-fade-in"
+          style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 12px)' }}
+        >
+          <div style={{
+            background: '#E8FF00',
+            color: '#000000',
+            padding: '12px 24px',
+            fontFamily: "'Oswald', sans-serif",
+            fontWeight: 700,
+            fontSize: 13,
+            textTransform: 'uppercase',
+            letterSpacing: 2,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}>
+            WORKOUT SAVED
+          </div>
+        </div>
+      )}
+
+      {/* Custom workout confirmation modal */}
+      {showCustomConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-6"
+          style={{ background: 'rgba(0,0,0,0.85)' }}
+        >
+          <div className="w-full p-6" style={{ background: '#111111', border: '1px solid #222222', maxWidth: 360, borderRadius: 0 }}>
+            <h3 style={{ fontFamily: "'Oswald', sans-serif", fontWeight: 700, fontSize: 18, color: '#FFFFFF', textTransform: 'uppercase', marginBottom: 8 }}>
+              Custom workout?
+            </h3>
+            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, color: '#888888', marginBottom: 20, lineHeight: 1.5 }}>
+              You have an active programme. This workout won't count towards your programme progression.
+            </p>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => { setShowCustomConfirm(false); navigate('/new-workout'); }}
+                className="py-3 btn-press px-4"
+                style={{ background: '#E8FF00', color: '#000000', fontFamily: "'Oswald', sans-serif", fontWeight: 700, fontSize: 14, textTransform: 'uppercase', borderRadius: 0, border: 'none' }}
+              >
+                Start custom workout
+              </button>
+              <button
+                onClick={() => setShowCustomConfirm(false)}
+                className="py-3 btn-press"
+                style={{ background: '#111111', border: '1px solid #222222', color: '#888888', fontFamily: "'Inter', sans-serif", fontWeight: 500, fontSize: 14, borderRadius: 0 }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 1. Top bar */}
       <div className="flex items-center justify-between px-5 pt-14 pb-2">
         <span style={{
@@ -276,9 +363,9 @@ export default function Home() {
               fontFamily: "'Oswald', sans-serif",
               fontWeight: 700,
               fontSize: 24,
-              color: '#FFFFFF',
+              color: recoveryScore != null ? (recoveryScore > 80 ? '#E8FF00' : '#FFFFFF') : '#555555',
             }}>
-              &mdash;
+              {recoveryScore != null ? recoveryScore : '\u2014'}
             </span>
             <span style={{
               fontFamily: "'Inter', sans-serif",
@@ -320,9 +407,9 @@ export default function Home() {
         </span>
       </div>
 
-      {/* 5. Recovery check-in */}
+      {/* 5. Recovery check-in — only shown if not yet logged today */}
       <div className="px-5" style={{ marginBottom: 16 }}>
-        <RecoveryCheckin compact />
+        <RecoveryCheckinOnce compact />
       </div>
 
       {/* 6. Deload suggestion */}
@@ -401,7 +488,7 @@ export default function Home() {
                 letterSpacing: 2,
                 color: '#000000',
               }}>
-                IN PROGRESS
+                {activeStatus === 'in_progress' ? 'IN PROGRESS' : 'READY TO START'}
               </span>
             </div>
             <div style={{
@@ -499,23 +586,24 @@ export default function Home() {
         </div>
       )}
 
-      {/* 9. Primary CTA */}
+      {/* 9. Primary CTA — de-emphasized when programme is active */}
       {!hasActiveWorkout && (
         <div className="px-5" style={{ marginBottom: 20 }}>
           <button
             onClick={startNewWorkout}
+            className="btn-press"
             style={{
               width: '100%',
               padding: '16px 0',
-              background: '#E8FF00',
-              border: 'none',
+              background: programme ? 'transparent' : '#E8FF00',
+              border: programme ? '1px solid #222222' : 'none',
               borderRadius: 0,
               fontFamily: "'Oswald', sans-serif",
               fontWeight: 700,
-              fontSize: 15,
+              fontSize: programme ? 13 : 15,
               letterSpacing: 3,
               textTransform: 'uppercase',
-              color: '#000000',
+              color: programme ? '#888888' : '#000000',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -524,7 +612,7 @@ export default function Home() {
             }}
           >
             <Zap size={16} />
-            START SESSION &rarr;
+            {programme ? 'CUSTOM WORKOUT' : 'START SESSION'} &rarr;
           </button>
         </div>
       )}

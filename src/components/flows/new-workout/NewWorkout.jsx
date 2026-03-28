@@ -5,6 +5,7 @@ import LoadingState from '../../shared/LoadingState';
 import ErrorState from '../../shared/ErrorState';
 import WorkoutDisplay from './WorkoutDisplay';
 import { storage } from '../../../utils/storage';
+import { useAuth } from '../../../auth/AuthContext';
 import { generateWorkout } from '../../../api/anthropic';
 import { useActiveWorkout } from '../../../context/ActiveWorkoutContext';
 import { recovery as recoveryApi } from '../../../services/api';
@@ -106,6 +107,7 @@ function OptionCard({ label, sub, selected, onClick }) {
 
 export default function NewWorkout() {
   const navigate = useNavigate();
+  const { profile: authProfile } = useAuth();
   const ctx = useActiveWorkout();
   const [step, setStep] = useState(0);
   const [config, setConfig] = useState({
@@ -117,6 +119,7 @@ export default function NewWorkout() {
   const [workout, setWorkout] = useState(null);
   const [todayRecovery, setTodayRecovery] = useState(null);
   const [overrideRecovery, setOverrideRecovery] = useState(false);
+  const [confirmRedOverride, setConfirmRedOverride] = useState(false);
 
   useEffect(() => {
     if (ctx.status === 'generated' && ctx.workout) {
@@ -144,7 +147,7 @@ export default function NewWorkout() {
     setLoading(true);
     setError(null);
     try {
-      const profile = storage.getProfile();
+      const profile = authProfile || storage.getProfile();
       const history = storage.getWorkoutHistory();
       const sessionConfig = {
         focus: config.focus === 'custom' ? config.customFocus : config.focus,
@@ -188,7 +191,7 @@ export default function NewWorkout() {
     await generate();
   }
 
-  const profile = storage.getProfile();
+  const profile = authProfile || storage.getProfile();
 
   if (loading) {
     return (
@@ -468,9 +471,17 @@ export default function NewWorkout() {
                score <= 65 ? '15% volume reduction applied' :
                score >= 86 ? 'Peak day — pushing harder' : 'Standard workout'}
             </p>
-            {score <= 65 && (
+            {score <= 65 && !confirmRedOverride && (
               <button
-                onClick={() => setOverrideRecovery(v => !v)}
+                onClick={() => {
+                  if (overrideRecovery) {
+                    setOverrideRecovery(false);
+                  } else if (score <= 40) {
+                    setConfirmRedOverride(true);
+                  } else {
+                    setOverrideRecovery(true);
+                  }
+                }}
                 className="btn-press"
                 style={{
                   marginTop: 8, background: 'none', border: 'none', cursor: 'pointer',
@@ -481,6 +492,29 @@ export default function NewWorkout() {
               >
                 {overrideRecovery ? 'Override active — full workout' : 'Override: generate full workout anyway'}
               </button>
+            )}
+            {confirmRedOverride && (
+              <div style={{ marginTop: 8, padding: 12, border: '1px solid #EF4444', background: 'rgba(239,68,68,0.1)' }}>
+                <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: '#EF4444', marginBottom: 8, lineHeight: 1.4 }}>
+                  Your recovery score is very low. Training at full intensity increases injury risk.
+                </p>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={() => setConfirmRedOverride(false)}
+                    className="btn-press"
+                    style={{ flex: 1, padding: '8px 0', background: 'transparent', border: '1px solid #222222', borderRadius: 0, color: '#888888', fontFamily: "'Inter', sans-serif", fontSize: 11, cursor: 'pointer' }}
+                  >
+                    Keep reduction
+                  </button>
+                  <button
+                    onClick={() => { setOverrideRecovery(true); setConfirmRedOverride(false); }}
+                    className="btn-press"
+                    style={{ flex: 1, padding: '8px 0', background: '#EF4444', border: 'none', borderRadius: 0, color: '#FFFFFF', fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600, cursor: 'pointer' }}
+                  >
+                    Override anyway
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         );

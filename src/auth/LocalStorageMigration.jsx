@@ -45,16 +45,16 @@ export default function LocalStorageMigration({ onDone }) {
       const payload = collectLocalData();
       await dataApi.importFromStorage(payload);
       clearLocalData();
+      dismiss(true);
     } catch (err) {
       console.error('Import failed:', err);
-    } finally {
       setImport(false);
-      dismiss(true);
+      alert('Import failed. Your local data has been preserved. Please try again later.');
     }
   }
 
   function dismiss(imported = false) {
-    clearLocalData(); // always clear local data after decision
+    if (!imported) clearLocalData();
     sessionStorage.setItem('migration_dismissed', '1');
     setDone(true);
     setShow(false);
@@ -92,7 +92,7 @@ export default function LocalStorageMigration({ onDone }) {
           <button
             onClick={doImport}
             disabled={importing}
-            style={{ flex: 2, padding: '11px', background: importing ? '#c4d900' : '#E8FF00', border: 'none', borderRadius: 0, color: '#0A0A0A', fontSize: 14, fontWeight: 600, cursor: importing ? 'not-allowed' : 'pointer', opacity: importing ? 0.7 : 1 }}
+            style={{ flex: 2, padding: '11px', background: importing ? '#222222' : '#E8FF00', border: 'none', borderRadius: 0, color: importing ? '#555555' : '#0A0A0A', fontSize: 14, fontWeight: 600, cursor: importing ? 'not-allowed' : 'pointer' }}
           >
             {importing ? 'Importing…' : 'Yes, import my data'}
           </button>

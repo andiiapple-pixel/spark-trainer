@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, X, SkipForward, ChevronDown, ChevronUp, Home, Calculator } from 'lucide-react';
 import { storage } from '../../../utils/storage';
+import { useAuth } from '../../../auth/AuthContext';
 import { data as dataApi } from '../../../services/api';
 import { generateEndOfWorkoutFeedback } from '../../../api/anthropic';
 import { useActiveWorkout } from '../../../context/ActiveWorkoutContext';
@@ -10,11 +11,13 @@ import PlateCalculator from '../../shared/PlateCalculator';
 
 function RestTimer({ seconds, onSkip, tip }) {
   const [remaining, setRemaining] = useState(seconds);
+  const onSkipRef = useRef(onSkip);
+  useEffect(() => { onSkipRef.current = onSkip; }, [onSkip]);
 
   useEffect(() => { setRemaining(seconds); }, [seconds]);
 
   useEffect(() => {
-    if (remaining <= 0) { onSkip?.(); return; }
+    if (remaining <= 0) { onSkipRef.current?.(); return; }
     const t = setTimeout(() => setRemaining(r => r - 1), 1000);
     return () => clearTimeout(t);
   }, [remaining]);
@@ -71,6 +74,7 @@ function RestTimer({ seconds, onSkip, tip }) {
 
 export default function ActiveWorkout() {
   const navigate = useNavigate();
+  const { profile: authProfile } = useAuth();
   const ctx = useActiveWorkout();
 
   const [resting, setResting] = useState(false);
@@ -83,6 +87,8 @@ export default function ActiveWorkout() {
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
+  const [showSkipModal, setShowSkipModal] = useState(false);
+  const [skipReason, setSkipReason] = useState('');
 
   const timerRef = useRef(null);
 
@@ -145,7 +151,7 @@ export default function ActiveWorkout() {
     }
   }
 
-  function goHome() { navigate('/'); }
+  function goHome() { setShowExitModal(true); }
 
   function cancelWorkout() {
     clearInterval(timerRef.current);
@@ -155,7 +161,7 @@ export default function ActiveWorkout() {
 
   async function finishWorkout(early = false) {
     clearInterval(timerRef.current);
-    const profile = storage.getProfile();
+    const profile = authProfile || storage.getProfile();
     const logged = exercises.map((ex, i) => ({
       name: ex.name,
       prescribed: { sets: ex.sets, reps: ex.reps, weight: ex.weight_guidance },
@@ -177,37 +183,44 @@ export default function ActiveWorkout() {
 
   async function saveWorkout() {
     setSaving(true);
-    const totalVolume = Object.values(ctx.completedSets).flat().reduce((acc, s) => {
-      return acc + (parseFloat(s.weight) || 0) * (parseInt(s.reps) || 1);
-    }, 0);
-    const entry = {
-      type: workout.sessionConfig?.focus || 'workout',
-      duration_mins: Math.round(ctx.elapsedSeconds / 60),
-      exercises: exercises.map((ex, i) => ({
-        name: ex.name,
-        sets_logged: ctx.completedSets[i] || [],
-        prescribed: ex,
-      })),
-      skipped: ctx.skippedExercises,
-      total_volume: totalVolume,
-      rating, notes,
-      trainer_feedback: feedback,
-      user_notes_today: workout.sessionConfig?.user_notes_today || null,
-      estimated_calories: workout.estimated_calories_range,
-      savedAt: new Date().toISOString(),
-    };
-    storage.addWorkout(entry);
-    ctx.clearActiveWorkout();
-    dataApi.saveWorkout(entry).catch(err =>
-      console.warn('[ActiveWorkout] API save failed:', err)
-    );
-    const prog = storage.getActiveProgramme();
-    if (prog && workout.programmeDay !== undefined) {
-      prog.lastCompletedDayIndex = workout.programmeDay;
-      prog.lastCompletedDate = new Date().toISOString();
-      storage.setActiveProgramme(prog);
+    try {
+      const totalVolume = Object.values(ctx.completedSets).flat().reduce((acc, s) => {
+        return acc + (parseFloat(s.weight) || 0) * (parseInt(s.reps) || 0);
+      }, 0);
+      const entry = {
+        type: workout.sessionConfig?.focus || 'workout',
+        duration_mins: Math.round(ctx.elapsedSeconds / 60),
+        exercises: exercises.map((ex, i) => ({
+          name: ex.name,
+          sets_logged: ctx.completedSets[i] || [],
+          prescribed: ex,
+        })),
+        skipped: ctx.skippedExercises,
+        total_volume: totalVolume,
+        rating, notes,
+        trainer_feedback: feedback,
+        user_notes_today: workout.sessionConfig?.user_notes_today || null,
+        estimated_calories: workout.estimated_calories_range,
+        savedAt: new Date().toISOString(),
+      };
+      storage.addWorkout(entry);
+      ctx.clearActiveWorkout();
+      dataApi.saveWorkout(entry).catch(err =>
+        console.warn('[ActiveWorkout] API save failed:', err)
+      );
+      const prog = storage.getActiveProgramme();
+      if (prog && workout.programmeDay !== undefined) {
+        prog.lastCompletedDayIndex = workout.programmeDay;
+        prog.lastCompletedDate = new Date().toISOString();
+        storage.setActiveProgramme(prog);
+      }
+      sessionStorage.setItem('spark_workout_saved', '1');
+      navigate('/');
+    } catch (err) {
+      console.error('[ActiveWorkout] Save failed:', err);
+      setSaving(false);
+      alert('Failed to save workout. Please try again.');
     }
-    navigate('/');
   }
 
   const formatTime = (s) =>
@@ -278,6 +291,78 @@ export default function ActiveWorkout() {
         </div>
       )}
 
+      {/* Skip exercise modal */}
+      {showSkipModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-6"
+          style={{ background: 'rgba(0,0,0,0.85)' }}
+        >
+          <div
+            className="w-full p-6"
+            style={{ background: '#111111', border: '1px solid #222222', maxWidth: 360, borderRadius: 0 }}
+          >
+            <h3 style={{ fontFamily: "'Oswald', sans-serif", fontWeight: 700, fontSize: 18, color: '#FFFFFF', textTransform: 'uppercase', marginBottom: 8 }}>Skip exercise?</h3>
+            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#888888', marginBottom: 16, lineHeight: 1.5 }}>
+              Select a reason or type your own.
+            </p>
+            <div className="flex flex-col gap-2 mb-4">
+              {['Equipment busy', 'Pain / discomfort', 'Too easy', 'Too hard'].map(r => (
+                <button
+                  key={r}
+                  onClick={() => setSkipReason(r)}
+                  className="py-2.5 px-4 btn-press text-left"
+                  style={{
+                    background: skipReason === r ? '#E8FF00' : 'transparent',
+                    color: skipReason === r ? '#000000' : '#888888',
+                    border: `1px solid ${skipReason === r ? '#E8FF00' : '#222222'}`,
+                    borderRadius: 0,
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: 13,
+                    fontWeight: 500,
+                  }}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+            <input
+              type="text"
+              placeholder="Other reason..."
+              value={['Equipment busy', 'Pain / discomfort', 'Too easy', 'Too hard'].includes(skipReason) ? '' : skipReason}
+              onChange={e => setSkipReason(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                background: '#0A0A0A',
+                border: '1px solid #222222',
+                borderRadius: 0,
+                color: '#FFFFFF',
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 13,
+                outline: 'none',
+                marginBottom: 16,
+              }}
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowSkipModal(false)}
+                className="flex-1 py-3 btn-press"
+                style={{ background: 'transparent', border: '1px solid #222222', color: '#888888', fontFamily: "'Inter', sans-serif", fontWeight: 500, fontSize: 13, borderRadius: 0 }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { setShowSkipModal(false); skipExercise(skipReason || 'skipped'); setSkipReason(''); }}
+                className="flex-1 py-3 btn-press"
+                style={{ background: '#E8FF00', border: 'none', color: '#000000', fontFamily: "'Oswald', sans-serif", fontWeight: 700, fontSize: 13, textTransform: 'uppercase', borderRadius: 0 }}
+              >
+                Skip
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Top bar */}
       <div style={{ background: '#0A0A0A', borderBottom: '1px solid #222222' }}>
         <div className="flex items-center gap-3 px-4 py-3">
@@ -293,7 +378,7 @@ export default function ActiveWorkout() {
                 {(() => {
                   const vol = Object.values(ctx.completedSets).flat()
                     .filter(s => s.set_type !== 'warmup')
-                    .reduce((acc, s) => acc + (parseFloat(s.weight) || 0) * (parseInt(s.reps) || 1), 0);
+                    .reduce((acc, s) => acc + (parseFloat(s.weight) || 0) * (parseInt(s.reps) || 0), 0);
                   return vol > 0 ? (
                     <span style={{ fontFamily: "'Oswald', sans-serif", fontSize: 12, fontWeight: 700, color: '#E8FF00', fontVariantNumeric: 'tabular-nums' }}>
                       {vol.toFixed(0)}kg
@@ -483,10 +568,7 @@ export default function ActiveWorkout() {
           <ChevronLeft size={14} /> PREV
         </button>
         <button
-          onClick={() => {
-            const reason = prompt('Why skipping? (Equipment busy / Pain / Too easy/hard)') || 'skipped';
-            skipExercise(reason);
-          }}
+          onClick={() => { setSkipReason(''); setShowSkipModal(true); }}
           className="flex-1 btn-press flex items-center justify-center gap-2"
           style={{ height: 44, background: 'transparent', border: '1px solid #222222', borderRadius: 0, fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 500, color: '#555555', textTransform: 'uppercase', letterSpacing: '0.04em' }}
         >

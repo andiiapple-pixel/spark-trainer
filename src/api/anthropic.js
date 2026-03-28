@@ -1,80 +1,86 @@
 import { config } from '../config';
+import { getAccessToken } from '../services/api';
 
-const API_KEY = config.anthropicApiKey;
-const BASE_URL = 'https://api.anthropic.com/v1/messages';
+const PROXY_URL = `${config.apiUrl}/api/ai/messages`;
 const MODEL = 'claude-sonnet-4-20250514';
 const TIMEOUT_MS = 30000;
 
-async function withTimeout(promise, ms = TIMEOUT_MS) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), ms);
-  return promise.finally(() => clearTimeout(timer));
-}
-
 async function callClaude(systemPrompt, userMessage, maxTokens = 4096) {
-  if (!API_KEY) {
-    throw new Error('No API key found. Add VITE_ANTHROPIC_API_KEY to your .env file.');
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+  try {
+    const headers = { 'Content-Type': 'application/json' };
+    const token = getAccessToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: maxTokens,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userMessage }],
+      }),
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      const status = res.status;
+      if (status === 429) throw Object.assign(new Error('Rate limit reached. Please wait a moment and try again.'), { code: 'RATE_LIMIT' });
+      if (status === 529) throw Object.assign(new Error('Claude is temporarily overloaded. Please try again in a moment.'), { code: 'OVERLOAD' });
+      throw new Error(err.error?.message || `API error ${status}`);
+    }
+    const data = await res.json();
+    if (config.isDev) {
+      const usage = data.usage;
+      if (usage) console.log(`[Claude] tokens — input: ${usage.input_tokens}, output: ${usage.output_tokens}`);
+    }
+    return data.content[0].text;
+  } finally {
+    clearTimeout(timer);
   }
-  const res = await withTimeout(fetch(BASE_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': API_KEY,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      max_tokens: maxTokens,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: userMessage }],
-    }),
-  }));
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    const status = res.status;
-    if (status === 429) throw Object.assign(new Error('Rate limit reached. Please wait a moment and try again.'), { code: 'RATE_LIMIT' });
-    if (status === 529) throw Object.assign(new Error('Claude is temporarily overloaded. Please try again in a moment.'), { code: 'OVERLOAD' });
-    throw new Error(err.error?.message || `API error ${status}`);
-  }
-  const data = await res.json();
-  if (config.isDev) {
-    const usage = data.usage;
-    if (usage) console.log(`[Claude] tokens — input: ${usage.input_tokens}, output: ${usage.output_tokens}`);
-  }
-  return data.content[0].text;
 }
 
 async function callClaudeChat(systemPrompt, messages, maxTokens = 1024) {
-  if (!API_KEY) throw new Error('No API key. Add VITE_ANTHROPIC_API_KEY to .env');
-  const res = await withTimeout(fetch(BASE_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': API_KEY,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      max_tokens: maxTokens,
-      system: systemPrompt,
-      messages,
-    }),
-  }));
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    const status = res.status;
-    if (status === 429) throw Object.assign(new Error('Rate limit reached. Please wait a moment and try again.'), { code: 'RATE_LIMIT' });
-    if (status === 529) throw Object.assign(new Error('Claude is temporarily overloaded. Please try again in a moment.'), { code: 'OVERLOAD' });
-    throw new Error(err.error?.message || `API error ${status}`);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+  try {
+    const headers = { 'Content-Type': 'application/json' };
+    const token = getAccessToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: maxTokens,
+        system: systemPrompt,
+        messages,
+      }),
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      const status = res.status;
+      if (status === 429) throw Object.assign(new Error('Rate limit reached. Please wait a moment and try again.'), { code: 'RATE_LIMIT' });
+      if (status === 529) throw Object.assign(new Error('Claude is temporarily overloaded. Please try again in a moment.'), { code: 'OVERLOAD' });
+      throw new Error(err.error?.message || `API error ${status}`);
+    }
+    const data = await res.json();
+    if (config.isDev) {
+      const usage = data.usage;
+      if (usage) console.log(`[Claude chat] tokens — input: ${usage.input_tokens}, output: ${usage.output_tokens}`);
+    }
+    return data.content[0].text;
+  } finally {
+    clearTimeout(timer);
   }
-  const data = await res.json();
-  if (config.isDev) {
-    const usage = data.usage;
-    if (usage) console.log(`[Claude chat] tokens — input: ${usage.input_tokens}, output: ${usage.output_tokens}`);
-  }
-  return data.content[0].text;
 }
 
 const WORKOUT_SCHEMA = `{

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import { ActiveWorkoutProvider } from './context/ActiveWorkoutContext';
@@ -29,7 +29,7 @@ const Coach                 = lazy(() => import('./components/coach/Coach'));
 const ExerciseLibrary       = lazy(() => import('./components/exercises/ExerciseLibrary'));
 const ExerciseDetail        = lazy(() => import('./components/exercises/ExerciseDetail'));
 
-const NO_BOTTOM_BAR = ['/workout/active'];
+const NO_BOTTOM_BAR = ['/workout/active', '/new-workout'];
 
 function PageLoader() {
   return (
@@ -55,15 +55,11 @@ function AppShell() {
   const { user, profile, isLoading } = useAuth();
   const [hasProfile, setHasProfile] = useState(null);
   const [showMigration, setShowMigration] = useState(false);
-  const profileDetermined = useRef(false);
 
   useEffect(() => {
     if (!isLoading) {
-      if (!profileDetermined.current) {
-        profileDetermined.current = true;
-        const profileComplete = !!(profile?.fitness_goal || profile?.extra_data?.name);
-        setHasProfile(profileComplete);
-      }
+      const profileComplete = !!(profile?.fitness_goal || profile?.extra_data?.name);
+      setHasProfile(profileComplete);
       if (!sessionStorage.getItem('migration_checked')) {
         sessionStorage.setItem('migration_checked', '1');
         setShowMigration(true);
