@@ -55,7 +55,7 @@ app.get('/health', (req, res) => res.json({ ok: true }));
 // ─── Debug (temporary) ──────────────────────────────────────────────────────
 app.get('/debug', async (req, res) => {
   const pool = require('./db/pool');
-  const checks = { env: {}, db: 'unknown' };
+  const checks = { env: {}, db: 'unknown', tables: [] };
   checks.env.NODE_ENV = process.env.NODE_ENV;
   checks.env.DATABASE_URL = process.env.DATABASE_URL ? 'set (' + process.env.DATABASE_URL.substring(0, 30) + '...)' : 'NOT SET';
   checks.env.JWT_PRIVATE_KEY = process.env.JWT_PRIVATE_KEY ? 'set (' + process.env.JWT_PRIVATE_KEY.length + ' chars)' : 'NOT SET';
@@ -64,6 +64,8 @@ app.get('/debug', async (req, res) => {
   try {
     const { rows } = await pool.query('SELECT NOW() as time, current_database() as db');
     checks.db = { connected: true, time: rows[0].time, database: rows[0].db };
+    const tables = await pool.query("SELECT tablename FROM pg_tables WHERE schemaname = 'public'");
+    checks.tables = tables.rows.map(r => r.tablename);
   } catch (err) {
     checks.db = { connected: false, error: err.message };
   }
