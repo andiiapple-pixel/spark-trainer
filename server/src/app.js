@@ -110,8 +110,8 @@ app.post('/migrate', async (req, res) => {
 
 // ─── Error handler ────────────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
-  console.error(err);
-  res.status(500).json({ error: 'Internal server error' });
+  console.error('Global error handler:', err.message, err.stack?.split('\n').slice(0, 3).join('\n'));
+  res.status(500).json({ error: 'Internal server error', _debug: err.message, _path: req.path });
 });
 
 const PORT = process.env.PORT || 3001;
