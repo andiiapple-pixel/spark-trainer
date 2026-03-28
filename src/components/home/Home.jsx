@@ -27,7 +27,7 @@ function getDeloadSuggestion(history) {
 
 export default function Home() {
   const navigate = useNavigate();
-  const { profile: authProfile } = useAuth();
+  const { profile: authProfile, user: authUser } = useAuth();
   const ctx = useActiveWorkout();
   const [deloadDismissed, setDeloadDismissed] = useState(
     () => localStorage.getItem('spark_deload_dismissed') === new Date().toDateString()
@@ -72,7 +72,7 @@ export default function Home() {
   const { hasActiveWorkout, workout: activeWkt, status: activeStatus } = ctx;
   const streak = getCurrentStreak(history);
   const weeklyCount = getWeeklyWorkoutCount(history);
-  const goalDays = profile?.daysPerWeek || 3;
+  const goalDays = profile?.daysPerWeek || profile?.training_days_per_week || 3;
   const motivational = getMotivationalLine(history);
 
   function getNextProgrammeDay() {
@@ -145,7 +145,9 @@ export default function Home() {
     heroContext = programme.name;
     heroHeadline = nextProg.dayName;
   } else {
-    heroHeadline = profile?.name || 'ATHLETE';
+    const fullName = profile?.name || authUser?.full_name || '';
+    const firstName = fullName.split(' ')[0];
+    heroHeadline = firstName || 'ATHLETE';
   }
 
   return (
