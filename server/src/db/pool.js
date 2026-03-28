@@ -1,8 +1,13 @@
 const { Pool } = require('pg');
 
+// Render internal URLs (dpg-xxx without domain) don't need SSL
+// External URLs and those with sslmode=require do
+const dbUrl = process.env.DATABASE_URL || '';
+const useSSL = dbUrl.includes('.render.com') || dbUrl.includes('sslmode=require');
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: useSSL ? { rejectUnauthorized: false } : false,
   max: 10,
   min: 2,
   idleTimeoutMillis: 30000,
