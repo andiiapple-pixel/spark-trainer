@@ -54,7 +54,8 @@ app.get('/health', (req, res) => res.json({ ok: true }));
 
 // ─── Run migrations on demand ────────────────────────────────────────────────
 app.post('/migrate', async (req, res) => {
-  if (req.headers['x-migrate-key'] !== process.env.JWT_REFRESH_SECRET?.slice(0, 16)) {
+  const migrateKey = process.env.MIGRATE_SECRET || process.env.JWT_REFRESH_SECRET?.slice(0, 16);
+  if (!migrateKey || req.headers['x-migrate-key'] !== migrateKey) {
     return res.status(403).json({ error: 'forbidden' });
   }
   try {
@@ -75,7 +76,8 @@ app.post('/migrate', async (req, res) => {
     }
     res.json({ ok: true, migrations: results });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Migration error:', err);
+    res.status(500).json({ error: 'Migration failed' });
   }
 });
 

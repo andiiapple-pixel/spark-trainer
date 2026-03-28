@@ -496,10 +496,11 @@ router.post('/import-csv', async (req, res) => {
 
         await client.query(
           `INSERT INTO workout_history (user_id, completed_at, workout_type, focus, workout_data, user_notes_today)
-           VALUES ($1,$2,'imported','Imported from ${format}', $3, $4)`,
+           VALUES ($1,$2,'imported',$3, $4, $5)`,
           [
             req.user.id,
             new Date(date),
+            `Imported from ${format}`,
             JSON.stringify({ exercises: [{ name: exerciseName, sets: [{ weight_kg: weight, reps }] }] }),
             `Imported from ${format}`
           ]

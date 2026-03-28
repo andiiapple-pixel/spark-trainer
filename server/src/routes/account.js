@@ -182,6 +182,7 @@ router.post('/verify-email-change', async (req, res) => {
   if (!record) return res.status(400).json({ error: 'Invalid or expired link.' });
   if (record.used_at) return res.status(400).json({ error: 'This link has already been used.' });
   if (new Date(record.expires_at) < new Date()) return res.status(400).json({ error: 'Link expired.' });
+  if (record.user_id !== req.user.id) return res.status(403).json({ error: 'Forbidden' });
 
   const existing = await pool.query('SELECT id FROM users WHERE email=$1', [newEmail]);
   if (existing.rows.length) return res.status(409).json({ error: 'That email is now taken by another account.' });

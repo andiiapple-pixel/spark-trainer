@@ -77,10 +77,8 @@ export default function ContinueProgramme() {
   const daysSinceLast = programme.lastCompletedDate ? daysSince(programme.lastCompletedDate) : 999;
   const isRestDay = nextDay?.type === 'rest';
 
-  const weeklyProgress = split.filter((_, i) => {
-    const startOfWeek = (programme.currentWeek - 1) * split.length;
-    return i >= startOfWeek && i <= lastIndex;
-  }).length;
+  const totalCompleted = programme.totalCompleted || 0;
+  const weeklyProgress = totalCompleted > 0 ? ((totalCompleted - 1) % split.length) + 1 : 0;
 
   async function generate() {
     setLoading(true);
@@ -147,7 +145,8 @@ export default function ContinueProgramme() {
     );
   }
 
-  const overallProgress = ((lastIndex + 1) / (split.length * programme.weeks));
+  const totalSessions = split.length * (programme.weeks || 1);
+  const overallProgress = Math.min(totalCompleted / totalSessions, 1);
 
   return (
     <div className="flex flex-col min-h-screen max-w-[430px] mx-auto pb-8" style={{ background: '#0A0A0A' }}>

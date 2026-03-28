@@ -1,15 +1,25 @@
+import { useEffect } from 'react';
 import { Trophy } from 'lucide-react';
 
 export default function EndOfWorkout({
   elapsedSeconds, exercises, setLogs, feedback, rating, onRating,
   notes, onNotes, onSave, saving
 }) {
+  // Prevent accidental navigation away before saving
+  useEffect(() => {
+    function handleBeforeUnload(e) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
   const totalSets = Object.values(setLogs).reduce((a, v) => a + v.length, 0);
   const totalVolume = Object.values(setLogs).flat().reduce((a, s) => {
     return a + (parseFloat(s.weight) || 0) * (parseInt(s.reps) || 0);
   }, 0);
   const mins = Math.round(elapsedSeconds / 60);
-  const exercisesLogged = exercises.filter(ex => (setLogs[ex.name] || []).length > 0).length;
+  const exercisesLogged = exercises.filter((_, i) => (setLogs[i] || []).length > 0).length;
 
   return (
     <div

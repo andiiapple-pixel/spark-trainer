@@ -143,7 +143,7 @@ export default function NewWorkout() {
     }));
   }
 
-  async function generate() {
+  async function generate(notesOverride) {
     setLoading(true);
     setError(null);
     try {
@@ -155,7 +155,7 @@ export default function NewWorkout() {
         duration_mins: config.duration,
         energy_level: config.energy,
         areas_to_avoid: config.avoid,
-        user_notes_today: config.notes || null,
+        user_notes_today: notesOverride || config.notes || null,
       };
 
       let recoveryContext = null;
@@ -188,7 +188,7 @@ export default function NewWorkout() {
   async function regenerate(extraNote) {
     setWorkout(null);
     if (extraNote) update('notes', extraNote);
-    await generate();
+    await generate(extraNote);
   }
 
   const profile = authProfile || storage.getProfile();

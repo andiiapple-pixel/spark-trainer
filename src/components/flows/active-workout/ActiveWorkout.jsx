@@ -212,6 +212,10 @@ export default function ActiveWorkout() {
       if (prog && workout.programmeDay !== undefined) {
         prog.lastCompletedDayIndex = workout.programmeDay;
         prog.lastCompletedDate = new Date().toISOString();
+        prog.totalCompleted = (prog.totalCompleted || 0) + 1;
+        // Advance week when all days in the split are completed
+        const splitLen = prog.split?.length || 1;
+        prog.currentWeek = Math.floor(prog.totalCompleted / splitLen) + 1;
         storage.setActiveProgramme(prog);
       }
       sessionStorage.setItem('spark_workout_saved', '1');

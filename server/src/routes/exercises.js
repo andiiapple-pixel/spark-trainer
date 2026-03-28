@@ -65,6 +65,21 @@ router.get('/search', async (req, res) => {
   }
 });
 
+// ─── Authenticated: Favourites (must be above /:slug to avoid shadowing) ─────
+router.get('/user/favourites', authenticate, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT e.* FROM exercises e
+       JOIN exercise_favourites f ON f.exercise_id = e.id
+       WHERE f.user_id = $1 ORDER BY e.name`,
+      [req.user.id]
+    );
+    res.json({ exercises: rows });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch favourites' });
+  }
+});
+
 router.get('/:slug', async (req, res) => {
   try {
     const { rows } = await pool.query('SELECT * FROM exercises WHERE slug=$1', [req.params.slug]);
@@ -76,7 +91,6 @@ router.get('/:slug', async (req, res) => {
   }
 });
 
-// ─── Authenticated: Favourites ────────────────────────────────────────────────
 router.post('/:id/favourite', authenticate, async (req, res) => {
   try {
     await pool.query(
@@ -98,20 +112,6 @@ router.delete('/:id/favourite', authenticate, async (req, res) => {
     res.json({ favourited: false });
   } catch (err) {
     res.status(500).json({ error: 'Failed to unfavourite' });
-  }
-});
-
-router.get('/user/favourites', authenticate, async (req, res) => {
-  try {
-    const { rows } = await pool.query(
-      `SELECT e.* FROM exercises e
-       JOIN exercise_favourites f ON f.exercise_id = e.id
-       WHERE f.user_id = $1 ORDER BY e.name`,
-      [req.user.id]
-    );
-    res.json({ exercises: rows });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch favourites' });
   }
 });
 

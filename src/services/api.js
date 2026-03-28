@@ -41,6 +41,9 @@ async function request(path, options = {}, retry = true) {
         return request(path, options, false);
       }
     }
+    // Any unrecoverable 401 (deactivated, invalid token, failed refresh) — clear auth state
+    clearAccessToken();
+    clearRefreshToken();
     throw Object.assign(new Error(body.error || 'Unauthorised'), { status: 401, body });
   }
 

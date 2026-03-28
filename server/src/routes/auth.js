@@ -109,55 +109,60 @@ router.post('/login',
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
-    const { email, password, device_label, remember_me } = req.body;
+    try {
+      const { email, password, device_label, remember_me } = req.body;
 
-    const { rows } = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-    const user = rows[0];
+      const { rows } = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+      const user = rows[0];
 
-    if (!user || !user.is_active) {
-      return res.status(401).json({ error: 'Invalid email or password.' });
-    }
-
-    // Check lock
-    if (user.locked_until && new Date(user.locked_until) > new Date()) {
-      const mins = Math.ceil((new Date(user.locked_until) - Date.now()) / 60000);
-      return res.status(423).json({ error: `Account locked. Try again in ${mins} minute(s).`, code: 'ACCOUNT_LOCKED' });
-    }
-
-    const valid = await bcrypt.compare(password, user.password_hash);
-    if (!valid) {
-      const attempts = user.failed_login_attempts + 1;
-      if (attempts >= LOCK_THRESHOLD) {
-        const lockedUntil = new Date(Date.now() + LOCK_DURATION_MINS * 60000);
-        await pool.query(
-          'UPDATE users SET failed_login_attempts=$1, locked_until=$2 WHERE id=$3',
-          [attempts, lockedUntil, user.id]
-        );
-        await emailService.sendAccountLockedEmail(user, lockedUntil).catch(console.error);
-        return res.status(423).json({ error: 'Account locked for 15 minutes due to too many failed attempts.', code: 'ACCOUNT_LOCKED' });
+      if (!user || !user.is_active) {
+        return res.status(401).json({ error: 'Invalid email or password.' });
       }
-      await pool.query('UPDATE users SET failed_login_attempts=$1 WHERE id=$2', [attempts, user.id]);
-      return res.status(401).json({ error: 'Invalid email or password.' });
+
+      // Check lock
+      if (user.locked_until && new Date(user.locked_until) > new Date()) {
+        const mins = Math.ceil((new Date(user.locked_until) - Date.now()) / 60000);
+        return res.status(423).json({ error: `Account locked. Try again in ${mins} minute(s).`, code: 'ACCOUNT_LOCKED' });
+      }
+
+      const valid = await bcrypt.compare(password, user.password_hash);
+      if (!valid) {
+        const attempts = user.failed_login_attempts + 1;
+        if (attempts >= LOCK_THRESHOLD) {
+          const lockedUntil = new Date(Date.now() + LOCK_DURATION_MINS * 60000);
+          await pool.query(
+            'UPDATE users SET failed_login_attempts=$1, locked_until=$2 WHERE id=$3',
+            [attempts, lockedUntil, user.id]
+          );
+          await emailService.sendAccountLockedEmail(user, lockedUntil).catch(console.error);
+          return res.status(423).json({ error: 'Account locked for 15 minutes due to too many failed attempts.', code: 'ACCOUNT_LOCKED' });
+        }
+        await pool.query('UPDATE users SET failed_login_attempts=$1 WHERE id=$2', [attempts, user.id]);
+        return res.status(401).json({ error: 'Invalid email or password.' });
+      }
+
+      if (!user.email_verified) {
+        return res.status(403).json({ error: 'Please verify your email before logging in.', code: 'EMAIL_NOT_VERIFIED' });
+      }
+
+      // Reset failed attempts, update last login
+      await pool.query(
+        'UPDATE users SET failed_login_attempts=0, locked_until=NULL, last_login_at=NOW() WHERE id=$1',
+        [user.id]
+      );
+
+      const { accessToken, refreshToken } = await issueTokenPair(user, {
+        rememberMe: !!remember_me,
+        deviceLabel: device_label,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+
+      res.json({ accessToken, refreshToken, user: safeUser(user) });
+    } catch (err) {
+      console.error('Login error:', err);
+      res.status(500).json({ error: 'Login failed' });
     }
-
-    if (!user.email_verified) {
-      return res.status(403).json({ error: 'Please verify your email before logging in.', code: 'EMAIL_NOT_VERIFIED' });
-    }
-
-    // Reset failed attempts, update last login
-    await pool.query(
-      'UPDATE users SET failed_login_attempts=0, locked_until=NULL, last_login_at=NOW() WHERE id=$1',
-      [user.id]
-    );
-
-    const { accessToken, refreshToken } = await issueTokenPair(user, {
-      rememberMe: !!remember_me,
-      deviceLabel: device_label,
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent'],
-    });
-
-    res.json({ accessToken, refreshToken, user: safeUser(user) });
   }
 );
 
@@ -233,6 +238,12 @@ router.post('/verify-email', async (req, res) => {
   if (!record) return res.status(400).json({ error: 'Invalid or expired verification link.', code: 'INVALID_TOKEN' });
   if (record.used_at) return res.status(400).json({ error: 'This link has already been used.', code: 'ALREADY_USED' });
   if (new Date(record.expires_at) < new Date()) return res.status(400).json({ error: 'Verification link expired.', code: 'EXPIRED' });
+
+  // Check the user account is still active before issuing tokens
+  const { rows: userRows } = await pool.query('SELECT is_active FROM users WHERE id=$1', [record.uid]);
+  if (!userRows.length || !userRows[0].is_active) {
+    return res.status(403).json({ error: 'Account is deactivated.' });
+  }
 
   await pool.query(
     'UPDATE users SET email_verified=TRUE, email_verified_at=NOW() WHERE id=$1',

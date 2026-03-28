@@ -37,6 +37,7 @@ export function AuthProvider({ children }) {
     try { await authApi.logout(); } catch {}
     clearAccessToken();
     clearRefreshToken();
+    try { localStorage.removeItem('spark_active_workout'); } catch {}
     setUser(null);
     setProfile(null);
   }, []);

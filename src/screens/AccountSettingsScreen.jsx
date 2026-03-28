@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Shield, Mail, Key, Monitor, Trash2, Check, X, Eye, EyeOff, BadgeCheck, AlertTriangle, Download } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
-import { account as accountApi, data as dataApi, getAccessToken } from '../services/api';
+import { auth as authApi, account as accountApi, data as dataApi, getAccessToken } from '../services/api';
 
 export default function AccountSettingsScreen() {
   const navigate = useNavigate();
@@ -275,16 +275,10 @@ function SessionsTab() {
   }
 
   async function revokeAll() {
-    if (!confirm('Log out all other devices?')) return;
+    if (!confirm('This will log out all devices including this one. Continue?')) return;
     try {
-      // Keep current — revoke all
-      await fetch; // use API
-      await accountApi.getSessions().then(async d => {
-        for (const s of d.sessions || []) {
-          await accountApi.revokeSession(s.id).catch(() => {});
-        }
-        setSessions([]);
-      });
+      await authApi.logoutAllDevices();
+      logout();
     } catch {}
   }
 
