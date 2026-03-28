@@ -52,6 +52,34 @@ app.use('/api/ai',        aiRoutes);
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => res.json({ ok: true }));
 
+// ─── Admin: wipe all users (temporary, remove after use) ────────────────────
+app.post('/admin/reset-users', async (req, res) => {
+  if (req.headers['x-migrate-key'] !== process.env.JWT_REFRESH_SECRET?.slice(0, 16)) {
+    return res.status(403).json({ error: 'forbidden' });
+  }
+  try {
+    const pool = require('./db/pool');
+    // Delete in correct order to respect foreign keys
+    await pool.query('DELETE FROM coach_chat_history');
+    await pool.query('DELETE FROM personal_records');
+    await pool.query('DELETE FROM health_metrics');
+    await pool.query('DELETE FROM workout_history');
+    await pool.query('DELETE FROM programmes');
+    await pool.query('DELETE FROM recovery_logs');
+    await pool.query('DELETE FROM user_achievements');
+    await pool.query('DELETE FROM equipment_profiles');
+    await pool.query('DELETE FROM exercise_favourites');
+    await pool.query('DELETE FROM email_verification_tokens');
+    await pool.query('DELETE FROM password_reset_tokens');
+    await pool.query('DELETE FROM refresh_tokens');
+    await pool.query('DELETE FROM user_profiles');
+    await pool.query('DELETE FROM users');
+    res.json({ ok: true, message: 'All user data deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── Run migrations on demand ────────────────────────────────────────────────
 app.post('/migrate', async (req, res) => {
   if (req.headers['x-migrate-key'] !== process.env.JWT_REFRESH_SECRET?.slice(0, 16)) {
