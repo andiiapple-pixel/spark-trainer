@@ -1,18 +1,6 @@
-const nodemailer = require('nodemailer');
-const path = require('path');
-const fs = require('fs');
-
 const APP_NAME = process.env.APP_NAME || 'Pocket Trainer';
 const APP_URL  = process.env.APP_URL  || 'http://localhost:5173';
-
-function createTransport() {
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_PORT === '465',
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-  });
-}
+const RESEND_API_KEY = process.env.SMTP_PASS; // Resend API key (same as SMTP pass)
 
 function wrap(title, bodyHtml) {
   return `<!DOCTYPE html>
@@ -51,13 +39,24 @@ function wrap(title, bodyHtml) {
 }
 
 async function send({ to, subject, html }) {
-  const transport = createTransport();
-  await transport.sendMail({
-    from: `"${APP_NAME}" <${process.env.EMAIL_FROM}>`,
-    to,
-    subject,
-    html,
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: `${APP_NAME} <${process.env.EMAIL_FROM}>`,
+      to: [to],
+      subject,
+      html,
+    }),
   });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Resend API error ${res.status}: ${body}`);
+  }
 }
 
 // ─── Template builders ────────────────────────────────────────────────────────
