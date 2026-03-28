@@ -52,6 +52,35 @@ app.use('/api/ai',        aiRoutes);
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => res.json({ ok: true }));
 
+// ─── Temporary diagnostic (remove after debugging) ───────────────────────────
+app.get('/diag', async (req, res) => {
+  if (req.headers['x-migrate-key'] !== process.env.JWT_REFRESH_SECRET?.slice(0, 16)) {
+    return res.status(403).json({ error: 'forbidden' });
+  }
+  const results = {};
+  try {
+    const pool = require('./db/pool');
+    const { rows } = await pool.query("SELECT table_name FROM information_schema.tables WHERE table_schema='public' ORDER BY table_name");
+    results.tables = rows.map(r => r.table_name);
+    const { rows: cols } = await pool.query("SELECT column_name FROM information_schema.columns WHERE table_name='users' ORDER BY ordinal_position");
+    results.usersColumns = cols.map(r => r.column_name);
+    // Test insert/rollback
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query("INSERT INTO users (email, password_hash, full_name) VALUES ('__diag_test__', '__hash__', 'Diag')");
+      await client.query('ROLLBACK');
+      results.insertTest = 'ok';
+    } catch (e) {
+      await client.query('ROLLBACK').catch(() => {});
+      results.insertTest = e.message;
+    } finally { client.release(); }
+  } catch (e) {
+    results.error = e.message;
+  }
+  res.json(results);
+});
+
 // ─── Run migrations on demand ────────────────────────────────────────────────
 app.post('/migrate', async (req, res) => {
   if (req.headers['x-migrate-key'] !== process.env.JWT_REFRESH_SECRET?.slice(0, 16)) {

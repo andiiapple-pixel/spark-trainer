@@ -59,37 +59,42 @@ router.post('/register',
     passwordRules,
   ],
   async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
-    const { email, password, full_name } = req.body;
+      const { email, password, full_name } = req.body;
 
-    const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
-    if (existing.rows.length) {
-      return res.status(409).json({ error: 'An account with this email already exists.' });
+      const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+      if (existing.rows.length) {
+        return res.status(409).json({ error: 'An account with this email already exists.' });
+      }
+
+      const password_hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+      const { rows } = await pool.query(
+        `INSERT INTO users (email, password_hash, full_name) VALUES ($1,$2,$3) RETURNING *`,
+        [email, password_hash, full_name]
+      );
+      const user = rows[0];
+
+      // Create empty profile row
+      await pool.query('INSERT INTO user_profiles (user_id) VALUES ($1) ON CONFLICT DO NOTHING', [user.id]);
+
+      // Send verification email
+      const rawToken = tokenService.generateOpaqueToken();
+      const tokenHash = tokenService.hashOpaqueToken(rawToken);
+      await pool.query(
+        `INSERT INTO email_verification_tokens (user_id, token_hash, expires_at)
+         VALUES ($1,$2, NOW() + INTERVAL '24 hours')`,
+        [user.id, tokenHash]
+      );
+      await emailService.sendVerificationEmail(user, rawToken).catch(console.error);
+
+      res.status(201).json({ message: 'Account created. Please check your email to verify your account.' });
+    } catch (err) {
+      console.error('Register error:', err);
+      res.status(500).json({ error: 'Registration failed', detail: err.message });
     }
-
-    const password_hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
-    const { rows } = await pool.query(
-      `INSERT INTO users (email, password_hash, full_name) VALUES ($1,$2,$3) RETURNING *`,
-      [email, password_hash, full_name]
-    );
-    const user = rows[0];
-
-    // Create empty profile row
-    await pool.query('INSERT INTO user_profiles (user_id) VALUES ($1) ON CONFLICT DO NOTHING', [user.id]);
-
-    // Send verification email
-    const rawToken = tokenService.generateOpaqueToken();
-    const tokenHash = tokenService.hashOpaqueToken(rawToken);
-    await pool.query(
-      `INSERT INTO email_verification_tokens (user_id, token_hash, expires_at)
-       VALUES ($1,$2, NOW() + INTERVAL '24 hours')`,
-      [user.id, tokenHash]
-    );
-    await emailService.sendVerificationEmail(user, rawToken).catch(console.error);
-
-    res.status(201).json({ message: 'Account created. Please check your email to verify your account.' });
   }
 );
 
