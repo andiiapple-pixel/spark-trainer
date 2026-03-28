@@ -52,35 +52,6 @@ app.use('/api/ai',        aiRoutes);
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => res.json({ ok: true }));
 
-// ─── Temporary diagnostic (remove after debugging) ───────────────────────────
-app.get('/diag', async (req, res) => {
-  if (req.headers['x-migrate-key'] !== process.env.JWT_REFRESH_SECRET?.slice(0, 16)) {
-    return res.status(403).json({ error: 'forbidden' });
-  }
-  const results = {};
-  try {
-    const pool = require('./db/pool');
-    const { rows } = await pool.query("SELECT table_name FROM information_schema.tables WHERE table_schema='public' ORDER BY table_name");
-    results.tables = rows.map(r => r.table_name);
-    const { rows: cols } = await pool.query("SELECT column_name FROM information_schema.columns WHERE table_name='users' ORDER BY ordinal_position");
-    results.usersColumns = cols.map(r => r.column_name);
-    // Test insert/rollback
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-      await client.query("INSERT INTO users (email, password_hash, full_name) VALUES ('__diag_test__', '__hash__', 'Diag')");
-      await client.query('ROLLBACK');
-      results.insertTest = 'ok';
-    } catch (e) {
-      await client.query('ROLLBACK').catch(() => {});
-      results.insertTest = e.message;
-    } finally { client.release(); }
-  } catch (e) {
-    results.error = e.message;
-  }
-  res.json(results);
-});
-
 // ─── Run migrations on demand ────────────────────────────────────────────────
 app.post('/migrate', async (req, res) => {
   if (req.headers['x-migrate-key'] !== process.env.JWT_REFRESH_SECRET?.slice(0, 16)) {
@@ -110,8 +81,8 @@ app.post('/migrate', async (req, res) => {
 
 // ─── Error handler ────────────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
-  console.error('Global error handler:', err.message, err.stack?.split('\n').slice(0, 3).join('\n'));
-  res.status(500).json({ error: 'Internal server error', _debug: err.message, _path: req.path });
+  console.error(err);
+  res.status(500).json({ error: 'Internal server error' });
 });
 
 const PORT = process.env.PORT || 3001;
