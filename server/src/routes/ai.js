@@ -5,7 +5,7 @@ const router = express.Router();
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const BASE_URL = 'https://api.anthropic.com/v1/messages';
-const TIMEOUT_MS = 30000;
+const TIMEOUT_MS = 90000;
 
 router.use(authenticate);
 

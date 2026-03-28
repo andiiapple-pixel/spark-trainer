@@ -1,6 +1,6 @@
 import { WifiOff, RefreshCw } from 'lucide-react';
 
-export default function ErrorState({ message, onRetry }) {
+export default function ErrorState({ title, message, onRetry }) {
   return (
     <div style={{
       display: 'flex',
@@ -22,7 +22,7 @@ export default function ErrorState({ message, onRetry }) {
           color: '#EF4444',
           margin: '0 0 4px 0',
         }}>
-          Connection lost
+          {title || 'Something went wrong'}
         </p>
         <p style={{
           fontFamily: "'Inter', sans-serif",

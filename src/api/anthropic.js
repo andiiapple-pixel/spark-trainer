@@ -3,7 +3,7 @@ import { getAccessToken } from '../services/api';
 
 const PROXY_URL = `${config.apiUrl}/api/ai/messages`;
 const MODEL = 'claude-sonnet-4-20250514';
-const TIMEOUT_MS = 30000;
+const TIMEOUT_MS = 90000;
 
 async function callClaude(systemPrompt, userMessage, maxTokens = 4096) {
   const controller = new AbortController();
@@ -30,6 +30,7 @@ async function callClaude(systemPrompt, userMessage, maxTokens = 4096) {
       const err = await res.json().catch(() => ({}));
       const status = res.status;
       if (status === 429) throw Object.assign(new Error('Rate limit reached. Please wait a moment and try again.'), { code: 'RATE_LIMIT' });
+      if (status === 504) throw Object.assign(new Error('Request timed out. The server took too long to respond — please try again.'), { code: 'TIMEOUT' });
       if (status === 529) throw Object.assign(new Error('Claude is temporarily overloaded. Please try again in a moment.'), { code: 'OVERLOAD' });
       throw new Error(err.error?.message || `API error ${status}`);
     }
@@ -39,6 +40,11 @@ async function callClaude(systemPrompt, userMessage, maxTokens = 4096) {
       if (usage) console.log(`[Claude] tokens — input: ${usage.input_tokens}, output: ${usage.output_tokens}`);
     }
     return data.content[0].text;
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      throw new Error('Request timed out. The server took too long to respond — please try again.');
+    }
+    throw err;
   } finally {
     clearTimeout(timer);
   }
@@ -69,6 +75,7 @@ async function callClaudeChat(systemPrompt, messages, maxTokens = 1024) {
       const err = await res.json().catch(() => ({}));
       const status = res.status;
       if (status === 429) throw Object.assign(new Error('Rate limit reached. Please wait a moment and try again.'), { code: 'RATE_LIMIT' });
+      if (status === 504) throw Object.assign(new Error('Request timed out. The server took too long to respond — please try again.'), { code: 'TIMEOUT' });
       if (status === 529) throw Object.assign(new Error('Claude is temporarily overloaded. Please try again in a moment.'), { code: 'OVERLOAD' });
       throw new Error(err.error?.message || `API error ${status}`);
     }
@@ -78,6 +85,11 @@ async function callClaudeChat(systemPrompt, messages, maxTokens = 1024) {
       if (usage) console.log(`[Claude chat] tokens — input: ${usage.input_tokens}, output: ${usage.output_tokens}`);
     }
     return data.content[0].text;
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      throw new Error('Request timed out. The server took too long to respond — please try again.');
+    }
+    throw err;
   } finally {
     clearTimeout(timer);
   }
