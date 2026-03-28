@@ -52,6 +52,33 @@ app.use('/api/ai',        aiRoutes);
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => res.json({ ok: true }));
 
+// ─── Run migrations on demand ────────────────────────────────────────────────
+app.post('/migrate', async (req, res) => {
+  if (req.headers['x-migrate-key'] !== process.env.JWT_REFRESH_SECRET?.slice(0, 16)) {
+    return res.status(403).json({ error: 'forbidden' });
+  }
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const pool = require('./db/pool');
+    const migrationsDir = path.join(__dirname, 'db/migrations');
+    await pool.query(`CREATE TABLE IF NOT EXISTS _migrations (id SERIAL PRIMARY KEY, filename VARCHAR(255) UNIQUE NOT NULL, run_at TIMESTAMP DEFAULT NOW())`);
+    const files = fs.readdirSync(migrationsDir).filter(f => f.endsWith('.sql')).sort();
+    const results = [];
+    for (const file of files) {
+      const { rows } = await pool.query('SELECT id FROM _migrations WHERE filename = $1', [file]);
+      if (rows.length > 0) { results.push({ file, status: 'skipped' }); continue; }
+      const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
+      await pool.query(sql);
+      await pool.query('INSERT INTO _migrations (filename) VALUES ($1)', [file]);
+      results.push({ file, status: 'ran' });
+    }
+    res.json({ ok: true, migrations: results });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── Debug (temporary) ──────────────────────────────────────────────────────
 app.get('/debug', async (req, res) => {
   const pool = require('./db/pool');
