@@ -247,7 +247,11 @@ export default function ActiveWorkout() {
     );
   }
 
-  const progressPct = ((exerciseIndex + completedSets / Math.max(totalSets, 1)) / Math.max(exercises.length, 1)) * 100;
+  // Calculate progress based on total sets completed across all exercises
+  const totalSetsAll = exercises.reduce((sum, ex) => sum + (ex.sets || 3), 0);
+  const completedSetsAll = Object.values(ctx.completedSets).reduce((sum, logs) => sum + logs.length, 0)
+    + ctx.skippedExercises.length * 3; // count skipped exercises as done
+  const progressPct = Math.min((completedSetsAll / Math.max(totalSetsAll, 1)) * 100, 100);
 
   return (
     <div className="flex flex-col min-h-screen max-w-[430px] mx-auto" style={{ background: '#0A0A0A' }}>
@@ -394,13 +398,13 @@ export default function ActiveWorkout() {
                 </span>
               </div>
             </div>
-            <div className="overflow-hidden" style={{ height: 2, background: '#222222', borderRadius: 0 }}>
+            <div className="overflow-hidden" style={{ height: 3, background: '#1a1a1a', borderRadius: 0 }}>
               <div
                 style={{
                   height: '100%',
                   width: `${progressPct}%`,
                   background: '#E8FF00',
-                  transition: 'width 0.5s ease',
+                  transition: 'width 0.4s ease-out',
                   borderRadius: 0,
                 }}
               />
