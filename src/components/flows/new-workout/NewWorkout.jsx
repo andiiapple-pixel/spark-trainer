@@ -529,8 +529,6 @@ export default function NewWorkout() {
           { label: 'Energy', value: ENERGY_OPTIONS.find(e => e.id === config.energy)?.label },
           config.avoid.length && !config.avoid.includes('Skip this') && { label: 'Avoiding', value: config.avoid.join(', ') },
           config.notes && { label: 'Your note', value: config.notes },
-          { label: 'Goal', value: profile?.goal },
-          { label: 'Experience', value: profile?.experience },
         ].filter(Boolean).map((row, i, arr) => (
           <div
             key={i}
