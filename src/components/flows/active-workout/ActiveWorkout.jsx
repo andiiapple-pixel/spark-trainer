@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, X, SkipForward, ChevronDown, ChevronUp, Home, Calculator } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, ChevronDown, ChevronUp, Home, Calculator, List } from 'lucide-react';
 import { storage } from '../../../utils/storage';
 import { useAuth } from '../../../auth/AuthContext';
 import { data as dataApi } from '../../../services/api';
@@ -89,6 +89,7 @@ export default function ActiveWorkout() {
   const [showExitModal, setShowExitModal] = useState(false);
   const [showSkipModal, setShowSkipModal] = useState(false);
   const [skipReason, setSkipReason] = useState('');
+  const [showExerciseList, setShowExerciseList] = useState(false);
 
   const timerRef = useRef(null);
 
@@ -135,11 +136,20 @@ export default function ActiveWorkout() {
 
   function goNext() {
     setResting(false);
+    setShowCues(false);
     if (exerciseIndex < exercises.length - 1) {
       ctx.setExerciseIndex(exerciseIndex + 1);
-      setShowCues(false);
     } else {
-      finishWorkout();
+      // At the last exercise — check if all are done
+      const allDone = exercises.every((_, i) => isExerciseDone(i));
+      if (allDone) {
+        finishWorkout();
+      } else {
+        // Jump to the first incomplete exercise
+        const next = exercises.findIndex((_, i) => !isExerciseDone(i));
+        if (next !== -1) ctx.setExerciseIndex(next);
+        else finishWorkout();
+      }
     }
   }
 
@@ -247,11 +257,18 @@ export default function ActiveWorkout() {
     );
   }
 
-  // Calculate progress based on total sets completed across all exercises
-  const totalSetsAll = exercises.reduce((sum, ex) => sum + (ex.sets || 3), 0);
-  const completedSetsAll = Object.values(ctx.completedSets).reduce((sum, logs) => sum + logs.length, 0)
-    + ctx.skippedExercises.length * 3; // count skipped exercises as done
-  const progressPct = Math.min((completedSetsAll / Math.max(totalSetsAll, 1)) * 100, 100);
+  function isExerciseDone(i) {
+    const logs = ctx.completedSets[i] || [];
+    const target = exercises[i]?.sets || 3;
+    return logs.length >= target || ctx.skippedExercises.some(s => s.index === i);
+  }
+
+  function jumpTo(i) {
+    setResting(false);
+    setShowCues(false);
+    setShowExerciseList(false);
+    ctx.setExerciseIndex(i);
+  }
 
   return (
     <div className="flex flex-col min-h-screen max-w-[430px] mx-auto" style={{ background: '#0A0A0A' }}>
@@ -373,48 +390,157 @@ export default function ActiveWorkout() {
 
       {/* Top bar */}
       <div style={{ background: '#0A0A0A', borderBottom: '1px solid #222222' }}>
-        <div className="flex items-center gap-3 px-4 py-3">
+        <div className="flex items-center gap-3 px-4 pt-3 pb-1.5">
           <button onClick={goHome} className="btn-press" style={{ color: '#888888', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #222222', borderRadius: 0, background: 'transparent' }} title="Go home">
             <Home size={18} />
           </button>
-          <div className="flex-1">
-            <div className="flex justify-between items-center mb-1.5">
-              <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 500, color: '#888888', fontVariantNumeric: 'tabular-nums' }}>
-                {exerciseIndex + 1} / {exercises.length}
+          <div className="flex-1 flex justify-between items-center">
+            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 500, color: '#888888', fontVariantNumeric: 'tabular-nums' }}>
+              {exerciseIndex + 1} / {exercises.length}
+            </span>
+            <div className="flex gap-3 items-center">
+              {(() => {
+                const vol = Object.values(ctx.completedSets).flat()
+                  .filter(s => s.set_type !== 'warmup')
+                  .reduce((acc, s) => acc + (parseFloat(s.weight) || 0) * (parseInt(s.reps) || 0), 0);
+                return vol > 0 ? (
+                  <span style={{ fontFamily: "'Oswald', sans-serif", fontSize: 12, fontWeight: 700, color: '#E8FF00', fontVariantNumeric: 'tabular-nums' }}>
+                    {vol.toFixed(0)}kg
+                  </span>
+                ) : null;
+              })()}
+              <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontVariantNumeric: 'tabular-nums', color: '#555555' }}>
+                {formatTime(ctx.elapsedSeconds)}
               </span>
-              <div className="flex gap-3 items-center">
-                {(() => {
-                  const vol = Object.values(ctx.completedSets).flat()
-                    .filter(s => s.set_type !== 'warmup')
-                    .reduce((acc, s) => acc + (parseFloat(s.weight) || 0) * (parseInt(s.reps) || 0), 0);
-                  return vol > 0 ? (
-                    <span style={{ fontFamily: "'Oswald', sans-serif", fontSize: 12, fontWeight: 700, color: '#E8FF00', fontVariantNumeric: 'tabular-nums' }}>
-                      {vol.toFixed(0)}kg
-                    </span>
-                  ) : null;
-                })()}
-                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontVariantNumeric: 'tabular-nums', color: '#555555' }}>
-                  {formatTime(ctx.elapsedSeconds)}
-                </span>
-              </div>
-            </div>
-            <div className="overflow-hidden" style={{ height: 3, background: '#1a1a1a', borderRadius: 0 }}>
-              <div
-                style={{
-                  height: '100%',
-                  width: `${progressPct}%`,
-                  background: '#E8FF00',
-                  transition: 'width 0.4s ease-out',
-                  borderRadius: 0,
-                }}
-              />
             </div>
           </div>
           <button onClick={() => setShowExitModal(true)} className="btn-press" style={{ color: '#888888', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #222222', borderRadius: 0, background: 'transparent' }}>
             <X size={18} />
           </button>
         </div>
+        {/* Segmented progress — tap to jump to any exercise */}
+        <div className="flex gap-1 px-4 pb-3">
+          {exercises.map((ex, i) => {
+            const done = isExerciseDone(i);
+            const current = i === exerciseIndex;
+            const setsLogged = (ctx.completedSets[i] || []).length;
+            const setsTotal = ex.sets || 3;
+            const partial = !done && setsLogged > 0;
+            return (
+              <button
+                key={i}
+                onClick={() => jumpTo(i)}
+                className="btn-press"
+                title={ex.name}
+                style={{
+                  flex: 1,
+                  height: 6,
+                  padding: 0,
+                  border: 'none',
+                  borderRadius: 0,
+                  cursor: 'pointer',
+                  position: 'relative',
+                  background: '#1a1a1a',
+                  overflow: 'hidden',
+                }}
+              >
+                <div style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  height: '100%',
+                  width: done ? '100%' : partial ? `${(setsLogged / setsTotal) * 100}%` : '0%',
+                  background: '#E8FF00',
+                  transition: 'width 0.3s ease-out',
+                }} />
+                {current && !done && (
+                  <div style={{
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    height: '100%',
+                    width: '100%',
+                    border: '1px solid #E8FF00',
+                    boxSizing: 'border-box',
+                  }} />
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
+
+      {/* Exercise list drawer */}
+      {showExerciseList && (
+        <div
+          className="fixed inset-0 z-50 flex flex-col justify-end"
+          style={{ background: 'rgba(0,0,0,0.85)' }}
+          onClick={() => setShowExerciseList(false)}
+        >
+          <div
+            className="max-w-[430px] mx-auto w-full animate-fade-in"
+            style={{ background: '#111111', borderTop: '1px solid #222222', maxHeight: '70vh', overflowY: 'auto' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="px-4 py-3" style={{ borderBottom: '1px solid #222222' }}>
+              <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, fontWeight: 500, color: '#555555', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                EXERCISES — TAP TO JUMP
+              </p>
+            </div>
+            {exercises.map((ex, i) => {
+              const done = isExerciseDone(i);
+              const current = i === exerciseIndex;
+              const setsLogged = (ctx.completedSets[i] || []).length;
+              const setsTotal = ex.sets || 3;
+              return (
+                <button
+                  key={i}
+                  onClick={() => jumpTo(i)}
+                  className="w-full text-left px-4 py-3 flex items-center gap-3 btn-press"
+                  style={{
+                    background: current ? '#1a1a1a' : 'transparent',
+                    borderBottom: '1px solid #1a1a1a',
+                    border: 'none',
+                    borderBottom: '1px solid #222222',
+                  }}
+                >
+                  <span style={{
+                    fontFamily: "'Oswald', sans-serif",
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: done ? '#E8FF00' : current ? '#FFFFFF' : '#555555',
+                    width: 24,
+                    textAlign: 'center',
+                  }}>
+                    {done ? '✓' : i + 1}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p style={{
+                      fontFamily: "'Oswald', sans-serif",
+                      fontSize: 14,
+                      fontWeight: 500,
+                      color: done ? '#888888' : current ? '#FFFFFF' : '#888888',
+                      textTransform: 'uppercase',
+                      textDecoration: done ? 'line-through' : 'none',
+                      textDecorationColor: '#555555',
+                    }}>
+                      {ex.name}
+                    </p>
+                    <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: '#555555' }}>
+                      {ex.sets} × {ex.reps}{setsLogged > 0 && !done ? ` — ${setsLogged}/${setsTotal} done` : ''}
+                    </p>
+                  </div>
+                  {current && (
+                    <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 9, fontWeight: 500, color: '#E8FF00', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                      NOW
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Main content */}
       <div className="flex-1 px-5 py-5 flex flex-col">
@@ -576,19 +702,19 @@ export default function ActiveWorkout() {
           <ChevronLeft size={14} /> PREV
         </button>
         <button
-          onClick={() => { setSkipReason(''); setShowSkipModal(true); }}
+          onClick={() => setShowExerciseList(true)}
           className="flex-1 btn-press flex items-center justify-center gap-2"
           style={{ height: 44, background: 'transparent', border: '1px solid #222222', borderRadius: 0, fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 500, color: '#555555', textTransform: 'uppercase', letterSpacing: '0.04em' }}
         >
-          <SkipForward size={13} />
-          Skip
+          <List size={14} />
+          ALL EXERCISES
         </button>
         <button
           onClick={goNext}
           className="btn-press flex items-center gap-1 justify-center"
           style={{ height: 44, padding: '0 12px', background: '#E8FF00', color: '#000000', borderRadius: 0, border: 'none', fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.04em' }}
         >
-          NEXT <ChevronRight size={14} />
+          {exerciseIndex < exercises.length - 1 ? 'NEXT' : 'FINISH'} <ChevronRight size={14} />
         </button>
       </div>
     </div>
