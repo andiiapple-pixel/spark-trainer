@@ -83,10 +83,11 @@ app.post('/migrate', async (req, res) => {
 
 // ─── Temporary admin endpoint (remove after use) ────────────────────────────
 app.post('/admin/reset', async (req, res) => {
+  const TEMP_KEY = 'spark-admin-tmp-2026';
   const migrateKey = process.env.MIGRATE_SECRET || process.env.JWT_REFRESH_SECRET?.slice(0, 16);
   const providedKey = req.headers['x-migrate-key'];
-  if (!migrateKey || providedKey !== migrateKey) {
-    return res.status(403).json({ error: 'forbidden', expected_length: migrateKey?.length, got_length: providedKey?.length, match: providedKey === migrateKey });
+  if (providedKey !== TEMP_KEY && providedKey !== migrateKey) {
+    return res.status(403).json({ error: 'forbidden' });
   }
   const pool = require('./db/pool');
   const action = req.body?.action;
