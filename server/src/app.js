@@ -81,6 +81,56 @@ app.post('/migrate', async (req, res) => {
   }
 });
 
+// ─── Temporary admin endpoint (remove after use) ────────────────────────────
+app.post('/admin/reset', async (req, res) => {
+  const migrateKey = process.env.MIGRATE_SECRET || process.env.JWT_REFRESH_SECRET?.slice(0, 16);
+  if (!migrateKey || req.headers['x-migrate-key'] !== migrateKey) {
+    return res.status(403).json({ error: 'forbidden' });
+  }
+  const pool = require('./db/pool');
+  const action = req.body?.action;
+  try {
+    if (action === 'delete-users') {
+      // Delete all user data (cascade handles related tables)
+      const { rowCount } = await pool.query('DELETE FROM users');
+      return res.json({ ok: true, deleted: rowCount });
+    }
+    if (action === 'test-email') {
+      const emailService = require('./services/emailService');
+      const to = req.body.to;
+      // Check env vars first
+      const envCheck = {
+        SMTP_PASS: !!process.env.SMTP_PASS,
+        SMTP_PASS_length: process.env.SMTP_PASS?.length || 0,
+        EMAIL_FROM: process.env.EMAIL_FROM || 'NOT SET',
+        APP_URL: process.env.APP_URL || 'NOT SET',
+        APP_NAME: process.env.APP_NAME || 'NOT SET',
+      };
+      try {
+        await emailService.sendVerificationEmail(
+          { id: 'test', email: to, full_name: 'Test User' },
+          'test-token-123'
+        );
+        return res.json({ ok: true, envCheck, message: 'Email sent successfully' });
+      } catch (emailErr) {
+        return res.json({ ok: false, envCheck, error: emailErr.message, stack: emailErr.stack });
+      }
+    }
+    if (action === 'env-check') {
+      return res.json({
+        SMTP_PASS: process.env.SMTP_PASS ? `set (${process.env.SMTP_PASS.length} chars, starts: ${process.env.SMTP_PASS.slice(0, 6)})` : 'NOT SET',
+        EMAIL_FROM: process.env.EMAIL_FROM || 'NOT SET',
+        APP_URL: process.env.APP_URL || 'NOT SET',
+        APP_NAME: process.env.APP_NAME || 'NOT SET',
+        NODE_VERSION: process.version,
+      });
+    }
+    res.status(400).json({ error: 'Unknown action. Use: delete-users, test-email, env-check' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── Error handler ────────────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
   console.error(err);
