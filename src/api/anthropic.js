@@ -118,11 +118,24 @@ const WORKOUT_SCHEMA = `{
   "session_name": "string — short punchy name for this session e.g. 'Upper Body Power'"
 }`;
 
+// Safe JSON.stringify that handles cyclic structures
+function safeStringify(obj, indent = 2) {
+  const seen = new WeakSet();
+  return JSON.stringify(obj, (key, value) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) return '[Circular]';
+      seen.add(value);
+    }
+    return value;
+  }, indent);
+}
+
 // Extract only the fields relevant for workout generation — avoids sending full profile bloat
 function trimProfile(profile) {
   if (!profile) return profile;
+  const extra = profile.extra_data;
   return {
-    name: profile.name,
+    name: profile.name || extra?.name,
     age: profile.age,
     biological_sex: profile.biological_sex || profile.sex,
     height_cm: profile.height_cm || profile.heightCm,
@@ -134,7 +147,8 @@ function trimProfile(profile) {
     training_days_per_week: profile.training_days_per_week || profile.daysPerWeek,
     preferred_session_mins: profile.preferred_session_mins || profile.sessionLength,
     diet_style: profile.diet_style || profile.diet,
-    extra_data: profile.extra_data,
+    injuryNotes: extra?.injuryNotes || null,
+    homeEquipment: extra?.homeEquipment || null,
   };
 }
 
@@ -161,20 +175,20 @@ export async function generateWorkout(profile, sessionConfig, recentWorkouts = [
 
   const userMessage = `
 CLIENT PROFILE:
-${JSON.stringify(trimProfile(profile), null, 2)}
+${safeStringify(trimProfile(profile))}
 
 SESSION CONFIG:
-${JSON.stringify(sessionConfig, null, 2)}
+${safeStringify(sessionConfig)}
 
 ${sessionConfig.user_notes_today ? `IMPORTANT — CLIENT NOTE FOR TODAY: "${sessionConfig.user_notes_today}"
 Parse this note for anything affecting today's workout (injuries, soreness, fatigue, mood, exercise preferences). Apply it directly and address it in the trainer_intro field. Never ignore this note.` : ''}
 
 RECENT WORKOUTS (last 3, for progressive overload context):
-${JSON.stringify(trimRecentWorkouts(recentWorkouts), null, 2)}
+${safeStringify(trimRecentWorkouts(recentWorkouts))}
 
-${programmeContext ? `PROGRAMME CONTEXT:\n${JSON.stringify(programmeContext, null, 2)}` : ''}
+${programmeContext ? `PROGRAMME CONTEXT:\n${safeStringify(programmeContext)}` : ''}
 
-${recoveryContext ? `RECOVERY DATA:\n${JSON.stringify(recoveryContext, null, 2)}` : ''}
+${recoveryContext ? `RECOVERY DATA:\n${safeStringify(recoveryContext)}` : ''}
 
 Generate today's workout. Return ONLY valid JSON matching this schema exactly:
 ${WORKOUT_SCHEMA}
@@ -205,8 +219,8 @@ export async function generateProgrammeOverview(profile, programmeConfig) {
   const system = `You are an elite personal trainer. Write a motivating, personalised programme overview directly to your client. Be specific about what they'll achieve and why this structure works for them. Second person only. 150-200 words exactly. No JSON, just the text.`;
 
   const userMessage = `
-CLIENT: ${JSON.stringify(trimProfile(profile), null, 2)}
-PROGRAMME: ${JSON.stringify(programmeConfig, null, 2)}
+CLIENT: ${safeStringify(trimProfile(profile))}
+PROGRAMME: ${safeStringify(programmeConfig)}
 
 Write their programme overview now.`;
 
@@ -217,9 +231,9 @@ export async function generateEndOfWorkoutFeedback(profile, prescribed, logged, 
   const system = `You are a personal trainer giving post-workout feedback. Be encouraging, specific, and honest. 3-5 sentences. Reference what the client flagged before the session if anything.`;
 
   const userMessage = `
-CLIENT: ${JSON.stringify(trimProfile(profile), null, 2)}
-PRESCRIBED WORKOUT: ${JSON.stringify(prescribed, null, 2)}
-WHAT THEY ACTUALLY DID: ${JSON.stringify(logged, null, 2)}
+CLIENT: ${safeStringify(trimProfile(profile))}
+PRESCRIBED WORKOUT: ${safeStringify(prescribed)}
+WHAT THEY ACTUALLY DID: ${safeStringify(logged)}
 SESSION RATING: ${rating}/5 stars
 ${userNotesToday ? `PRE-SESSION NOTE FROM CLIENT: "${userNotesToday}"` : ''}
 
@@ -249,7 +263,7 @@ export async function generateDailyMessage(profile, context) {
 
 export async function generateContextualCoachPrompts(profile, coachContext) {
   const system = `You are a personal trainer. Generate 3 contextually relevant question suggestions for your client to ask you right now, based on their current training situation. Return ONLY a JSON array of 3 strings. Each string is a natural question from the client's perspective, max 10 words. No other text.`;
-  const userMessage = `Context: ${JSON.stringify(coachContext, null, 2)}\nProfile: ${JSON.stringify(trimProfile(profile), null, 2)}`;
+  const userMessage = `Context: ${safeStringify(coachContext)}\nProfile: ${safeStringify(trimProfile(profile))}`;
   const text = await callClaude(system, userMessage, 256);
   try {
     const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
@@ -268,18 +282,18 @@ export async function sendCoachMessage(profile, chatHistory, userMessage, recent
 
   const contextSection = trimmedContext ? `
 FULL TRAINING CONTEXT:
-- Recent workouts (last 5): ${JSON.stringify(trimmedContext.recentWorkouts, null, 2)}
-- Current programme: ${JSON.stringify(trimmedContext.currentProgramme, null, 2)}
+- Recent workouts (last 5): ${safeStringify(trimmedContext.recentWorkouts)}
+- Current programme: ${safeStringify(trimmedContext.currentProgramme)}
 - Recovery (last 7 days scores): ${trimmedContext.recentRecovery?.map(r => `${r.logged_date}: ${r.recovery_score}`).join(', ') || 'no data'}
-- Personal records: ${JSON.stringify(trimmedContext.personalRecords?.slice(0, 10), null, 2)}
-- Consistency: ${JSON.stringify(trimmedContext.consistencyStats, null, 2)}
+- Personal records: ${safeStringify(trimmedContext.personalRecords?.slice(0, 10))}
+- Consistency: ${safeStringify(trimmedContext.consistencyStats)}
 
 You have full knowledge of this client's recent training history, recovery patterns, and goals. Reference specific details from their history when relevant — do not give generic advice when you have their actual data. If they mention a pain or symptom that appears in their recent workout notes more than once, proactively flag it.` : '';
 
   const system = `You are an expert personal trainer and health coach with 20+ years of experience. You know your client well from their profile and training history. Be encouraging, direct, and knowledgeable. If they describe pain or injury symptoms, always recommend consulting a healthcare professional. Keep responses concise (under 200 words) unless a detailed explanation is needed.
 
 CLIENT PROFILE:
-${JSON.stringify(trimProfile(profile), null, 2)}
+${safeStringify(trimProfile(profile))}
 ${contextSection}
 ${recentNotes.length ? `\nRECENT PRE-SESSION NOTES FROM THIS CLIENT:\n${recentNotes.map((n, i) => `${i + 1}. "${n}"`).join('\n')}\nNote: If you see recurring themes (e.g. repeated knee soreness), proactively flag it.` : ''}`;
 
