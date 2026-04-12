@@ -84,8 +84,9 @@ app.post('/migrate', async (req, res) => {
 // ─── Temporary admin endpoint (remove after use) ────────────────────────────
 app.post('/admin/reset', async (req, res) => {
   const migrateKey = process.env.MIGRATE_SECRET || process.env.JWT_REFRESH_SECRET?.slice(0, 16);
-  if (!migrateKey || req.headers['x-migrate-key'] !== migrateKey) {
-    return res.status(403).json({ error: 'forbidden' });
+  const providedKey = req.headers['x-migrate-key'];
+  if (!migrateKey || providedKey !== migrateKey) {
+    return res.status(403).json({ error: 'forbidden', expected_length: migrateKey?.length, got_length: providedKey?.length, match: providedKey === migrateKey });
   }
   const pool = require('./db/pool');
   const action = req.body?.action;
